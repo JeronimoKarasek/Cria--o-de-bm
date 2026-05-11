@@ -1,0 +1,53 @@
+# dependencies
+node_modules
+.pnp
+.pnp.js
+.yarn/cache
+.yarn/install-state.gz
+.yarn/build-state
+.yarn/unplugged
+.pnp.cjs
+
+# testing
+coverage
+
+# next.js
+.next/
+out/
+build/
+dist/
+
+# misc
+.DS_Store
+*.pem
+.vscode
+.idea
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# local env files
+.env
+.env*.local
+.env.production
+.env.development
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# prisma generated
+prisma/.cache
+
+# backups (mantemos no histórico mas não no working tree)
+_backup/
+
+# logs
+logs
+*.log

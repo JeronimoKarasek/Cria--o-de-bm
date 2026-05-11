@@ -1,0 +1,315 @@
+// Schema Prisma — Sistema de Validação de BM + WhatsApp Business
+// Banco: Supabase Postgres
+// IMPORTANTE: nunca remova tabelas existentes. Toda alteração deve ser aditiva.
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+enum UserRole {
+  ADMIN
+  FUNCIONARIO
+}
+
+enum EmpresaStatus {
+  PENDENTE
+  EM_ANALISE
+  APROVADA
+  REJEITADA
+}
+
+enum DocumentoTipo {
+  CNPJ_CARTAO
+  CONTRATO_SOCIAL
+  PROCURACAO
+  COMPROVANTE_ENDERECO
+  IDENTIDADE
+  OUTRO
+}
+
+enum DocumentoStatus {
+  PENDENTE
+  APROVADO
+  REJEITADO
+}
+
+enum ContaMetaStatus {
+  ATIVA
+  DESATIVADA
+  EM_REVISAO
+  SUSPENSA
+  CANCELADA
+  RESTRITA
+}
+
+// ============================================================
+// MODELS
+// ============================================================
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String
+  password  String
+  role      UserRole   @default(FUNCIONARIO)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  empresas  Empresa[]
+  auditLogs AuditLog[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model Empresa {
+  id                  String                @id @default(cuid())
+  razaoSocial         String                @map("razao_social")
+  nomeFantasia        String                @map("nome_fantasia")
+  cnpj                String                @unique
+  segmento            String
+  email               String
+  telefone            String?
+  website             String?
+  endereco            String?
+  cidade              String?
+  estado              String?
+  cep                 String?
+  status              EmpresaStatus         @default(PENDENTE)
+  trustScore          Int                   @default(0) @map("trust_score")
+  observacoes         String?
+  criadoPorId         String                @map("criado_por_id")
+  criadoPor           User                  @relation(fields: [criadoPorId], references: [id])
+  createdAt           DateTime              @default(now()) @map("created_at")
+  updatedAt           DateTime              @updatedAt @map("updated_at")
+  documentos          Documento[]
+  contasMeta          ContaMeta[]
+  numerosWhatsapp     NumeroWhatsapp[]
+  sitesVerificacao    SiteVerificacao[]
+  trustScoreHistorico TrustScoreHistorico[]
+  dominios            DominioVerificacao[]
+  auditLogs           AuditLog[]
+
+  @@index([cnpj])
+  @@index([status])
+  @@index([criadoPorId])
+  @@map("empresas")
+}
+
+model Documento {
+  id               String          @id @default(cuid())
+  tipo             DocumentoTipo
+  nome             String
+  cloudStoragePath String          @map("cloud_storage_path")
+  isPublic         Boolean         @default(false) @map("is_public")
+  status           DocumentoStatus @default(PENDENTE)
+  observacao       String?
+  empresaId        String          @map("empresa_id")
+  empresa          Empresa         @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+
+  @@index([empresaId])
+  @@index([tipo])
+  @@map("documentos")
+}
+
+model ContaMeta {
+  id                String               @id @default(cuid())
+  nome              String
+  metaBusinessId    String?              @map("meta_business_id")
+  adAccountId       String?              @map("ad_account_id")
+  wabaId            String?              @map("waba_id")
+  appId             String?              @map("app_id")
+  accessToken       String?              @map("access_token") @db.Text
+  status            ContaMetaStatus      @default(ATIVA)
+  tipo              String               @default("Business Manager")
+  verificacaoStatus String?              @default("NAO_VERIFICADA") @map("verificacao_status")
+  observacoes       String?
+  motivoRestricao   String?              @map("motivo_restricao") @db.Text
+  dataRestricao     DateTime?            @map("data_restricao")
+  recursoEnviado    Boolean              @default(false) @map("recurso_enviado")
+  dataRecurso       DateTime?            @map("data_recurso")
+  recursoDescricao  String?              @map("recurso_descricao") @db.Text
+  historicoStatus   ContaMetaHistorico[]
+  numerosWhatsapp   NumeroWhatsapp[]
+  templates         MessageTemplate[]
+  empresaId         String               @map("empresa_id")
+  empresa           Empresa              @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  createdAt         DateTime             @default(now()) @map("created_at")
+  updatedAt         DateTime             @updatedAt @map("updated_at")
+
+  @@index([empresaId])
+  @@index([status])
+  @@map("contas_meta")
+}
+
+model NumeroWhatsapp {
+  id                String    @id @default(cuid())
+  numero            String
+  phoneNumberId     String?   @unique @map("phone_number_id")
+  displayName       String?   @map("display_name")
+  qualityRating     String?   @default("GREEN") @map("quality_rating")
+  status            String    @default("PENDENTE")
+  codigoVerificacao String?   @map("codigo_verificacao")
+  pin2fa            String?   @map("pin_2fa")
+  limiteMsg         String?   @default("250") @map("limite_msg")
+  categoria         String?   @default("UTILITY")
+  contaMetaId       String    @map("conta_meta_id")
+  contaMeta         ContaMeta @relation(fields: [contaMetaId], references: [id], onDelete: Cascade)
+  empresaId         String    @map("empresa_id")
+  empresa           Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@index([contaMetaId])
+  @@index([empresaId])
+  @@index([status])
+  @@map("numeros_whatsapp")
+}
+
+model ContaMetaHistorico {
+  id             String    @id @default(cuid())
+  statusAnterior String    @map("status_anterior")
+  statusNovo     String    @map("status_novo")
+  motivo         String?   @db.Text
+  contaMetaId    String    @map("conta_meta_id")
+  contaMeta      ContaMeta @relation(fields: [contaMetaId], references: [id], onDelete: Cascade)
+  criadoPorId    String?   @map("criado_por_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@index([contaMetaId])
+  @@index([createdAt])
+  @@map("contas_meta_historico")
+}
+
+model SiteVerificacao {
+  id                 String   @id @default(cuid())
+  dominio            String?
+  template           String   @default("institucional")
+  segmento           String
+  nomeEmpresa        String   @map("nome_empresa")
+  descricao          String?
+  corPrimaria        String   @default("#1877F2") @map("cor_primaria")
+  corSecundaria      String   @default("#42B72A") @map("cor_secundaria")
+  incluirTermos      Boolean  @default(true) @map("incluir_termos")
+  incluirPrivacidade Boolean  @default(true) @map("incluir_privacidade")
+  incluirLgpd        Boolean  @default(true) @map("incluir_lgpd")
+  conteudoGerado     String?  @map("conteudo_gerado") @db.Text
+  status             String   @default("rascunho")
+  empresaId          String   @map("empresa_id")
+  empresa            Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@index([empresaId])
+  @@map("sites_verificacao")
+}
+
+model TrustScoreHistorico {
+  id        String   @id @default(cuid())
+  score     Int
+  detalhes  String?  @db.Text
+  empresaId String   @map("empresa_id")
+  empresa   Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([empresaId])
+  @@index([createdAt])
+  @@map("trust_score_historico")
+}
+
+model MetaApiConfig {
+  id              String   @id @default(cuid())
+  appId           String   @map("app_id")
+  appSecret       String?  @map("app_secret") @db.Text
+  accessToken     String?  @map("access_token") @db.Text
+  webhookToken    String?  @map("webhook_token")
+  graphApiVersion String   @default("v21.0") @map("graph_api_version")
+  ativo           Boolean  @default(true)
+  descricao       String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("meta_api_config")
+}
+
+model DominioVerificacao {
+  id             String    @id @default(cuid())
+  dominio        String
+  domainId       String?   @map("domain_id")
+  verificado     Boolean   @default(false)
+  metodo         String?   // dns_txt, html_file, meta_tag
+  tokenVerific   String?   @map("token_verificacao")
+  ultimoCheck    DateTime? @map("ultimo_check")
+  empresaId      String    @map("empresa_id")
+  empresa        Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@unique([empresaId, dominio])
+  @@index([empresaId])
+  @@map("dominios_verificacao")
+}
+
+model MessageTemplate {
+  id            String    @id @default(cuid())
+  name          String
+  templateId    String?   @map("template_id")
+  status        String    @default("PENDING")
+  category      String    @default("UTILITY")
+  language      String    @default("pt_BR")
+  components    String?   @db.Text // JSON com componentes
+  rejectionReason String? @map("rejection_reason")
+  qualityScore  String?   @map("quality_score")
+  contaMetaId   String    @map("conta_meta_id")
+  contaMeta     ContaMeta @relation(fields: [contaMetaId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@index([contaMetaId])
+  @@index([status])
+  @@map("message_templates")
+}
+
+model WebhookEvent {
+  id          String   @id @default(cuid())
+  event       String   // mensagens, account_review, phone_number, template_status, etc.
+  payload     String   @db.Text
+  signatureOk Boolean  @default(false) @map("signature_ok")
+  processed   Boolean  @default(false)
+  errorMsg    String?  @map("error_msg") @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([event])
+  @@index([processed])
+  @@index([createdAt])
+  @@map("webhook_events")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  acao       String
+  descricao  String
+  entidade   String
+  entidadeId String?  @map("entidade_id")
+  userId     String?  @map("user_id")
+  user       User?    @relation(fields: [userId], references: [id])
+  empresaId  String?  @map("empresa_id")
+  empresa    Empresa? @relation(fields: [empresaId], references: [id], onDelete: SetNull)
+  metadata   String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([empresaId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
