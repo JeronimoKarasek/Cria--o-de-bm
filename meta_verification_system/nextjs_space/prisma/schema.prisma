@@ -1,0 +1,239 @@
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+    output = "/home/ubuntu/meta_verification_system/nextjs_space/node_modules/.prisma/client"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  FUNCIONARIO
+}
+
+enum EmpresaStatus {
+  PENDENTE
+  EM_ANALISE
+  APROVADA
+  REJEITADA
+}
+
+enum DocumentoTipo {
+  CNPJ_CARTAO
+  CONTRATO_SOCIAL
+  PROCURACAO
+  COMPROVANTE_ENDERECO
+  IDENTIDADE
+  OUTRO
+}
+
+enum DocumentoStatus {
+  PENDENTE
+  APROVADO
+  REJEITADO
+}
+
+enum ContaMetaStatus {
+  ATIVA
+  DESATIVADA
+  EM_REVISAO
+  SUSPENSA
+  CANCELADA
+  RESTRITA
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  password      String
+  role          UserRole  @default(FUNCIONARIO)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  empresas      Empresa[]
+  auditLogs     AuditLog[]
+
+  @@index([email])
+}
+
+model Empresa {
+  id              String        @id @default(cuid())
+  razaoSocial     String
+  nomeFantasia    String
+  cnpj            String        @unique
+  segmento        String
+  email           String
+  telefone        String?
+  website         String?
+  endereco        String?
+  cidade          String?
+  estado          String?
+  cep             String?
+  status          EmpresaStatus @default(PENDENTE)
+  trustScore      Int           @default(0)
+  observacoes     String?
+  criadoPorId     String
+  criadoPor       User          @relation(fields: [criadoPorId], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  documentos      Documento[]
+  contasMeta      ContaMeta[]
+  numerosWhatsapp NumeroWhatsapp[]
+  sitesVerificacao SiteVerificacao[]
+  trustScoreHistorico TrustScoreHistorico[]
+  auditLogs       AuditLog[]
+
+  @@index([cnpj])
+  @@index([status])
+  @@index([criadoPorId])
+}
+
+model Documento {
+  id              String          @id @default(cuid())
+  tipo            DocumentoTipo
+  nome            String
+  cloudStoragePath String
+  isPublic        Boolean         @default(false)
+  status          DocumentoStatus @default(PENDENTE)
+  observacao      String?
+  empresaId       String
+  empresa         Empresa         @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([empresaId])
+  @@index([tipo])
+}
+
+model ContaMeta {
+  id              String          @id @default(cuid())
+  nome            String
+  metaBusinessId  String?
+  adAccountId     String?
+  wabaId          String?
+  appId           String?
+  accessToken     String?         @db.Text
+  status          ContaMetaStatus @default(ATIVA)
+  tipo            String          @default("Business Manager")
+  verificacaoStatus String?       @default("NAO_VERIFICADA")
+  observacoes     String?
+  motivoRestricao String?         @db.Text
+  dataRestricao   DateTime?
+  recursoEnviado  Boolean         @default(false)
+  dataRecurso     DateTime?
+  recursoDescricao String?        @db.Text
+  historicoStatus ContaMetaHistorico[]
+  numerosWhatsapp NumeroWhatsapp[]
+  empresaId       String
+  empresa         Empresa         @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([empresaId])
+  @@index([status])
+}
+
+model NumeroWhatsapp {
+  id              String    @id @default(cuid())
+  numero          String
+  phoneNumberId   String?
+  displayName     String?
+  qualityRating   String?   @default("GREEN")
+  status          String    @default("PENDENTE")
+  codigoVerificacao String?
+  pin2fa          String?
+  limiteMsg       String?   @default("250")
+  categoria       String?   @default("UTILITY")
+  contaMetaId     String
+  contaMeta       ContaMeta @relation(fields: [contaMetaId], references: [id], onDelete: Cascade)
+  empresaId       String
+  empresa         Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([contaMetaId])
+  @@index([empresaId])
+  @@index([status])
+}
+
+model ContaMetaHistorico {
+  id              String          @id @default(cuid())
+  statusAnterior  String
+  statusNovo      String
+  motivo          String?         @db.Text
+  contaMetaId     String
+  contaMeta       ContaMeta       @relation(fields: [contaMetaId], references: [id], onDelete: Cascade)
+  criadoPorId     String?
+  createdAt       DateTime        @default(now())
+
+  @@index([contaMetaId])
+  @@index([createdAt])
+}
+
+model SiteVerificacao {
+  id              String    @id @default(cuid())
+  dominio         String?
+  template        String    @default("institucional")
+  segmento        String
+  nomeEmpresa     String
+  descricao       String?
+  corPrimaria     String    @default("#1877F2")
+  corSecundaria   String    @default("#42B72A")
+  incluirTermos   Boolean   @default(true)
+  incluirPrivacidade Boolean @default(true)
+  incluirLgpd     Boolean   @default(true)
+  conteudoGerado  String?   @db.Text
+  status          String    @default("rascunho")
+  empresaId       String
+  empresa         Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([empresaId])
+}
+
+model TrustScoreHistorico {
+  id              String    @id @default(cuid())
+  score           Int
+  detalhes        String?   @db.Text
+  empresaId       String
+  empresa         Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  createdAt       DateTime  @default(now())
+
+  @@index([empresaId])
+  @@index([createdAt])
+}
+
+model MetaApiConfig {
+  id              String    @id @default(cuid())
+  appId           String
+  appSecret       String?   @db.Text
+  accessToken     String?   @db.Text
+  webhookToken    String?
+  graphApiVersion String    @default("v21.0")
+  ativo           Boolean   @default(true)
+  descricao       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model AuditLog {
+  id              String    @id @default(cuid())
+  acao            String
+  descricao       String
+  entidade        String
+  entidadeId      String?
+  userId          String?
+  user            User?     @relation(fields: [userId], references: [id])
+  empresaId       String?
+  empresa         Empresa?  @relation(fields: [empresaId], references: [id], onDelete: SetNull)
+  metadata        String?   @db.Text
+  createdAt       DateTime  @default(now())
+
+  @@index([userId])
+  @@index([empresaId])
+  @@index([createdAt])
+}
