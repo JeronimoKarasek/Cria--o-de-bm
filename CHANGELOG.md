@@ -51,6 +51,43 @@
 
 ---
 
+## 1.1.0 — 2026-05-30
+
+### 🆕 Adicionado — Sistema de Warming (Aquecimento Gradual)
+
+- **Migration SQL** `0003_warming_system.sql`:
+  - Enum `WarmingStage` (COLD → WARMING_1_3 → ... → ACTIVE)
+  - 8 colunas novas em `numeros_whatsapp` (warming_stage, warming_day, daily_msg_count, etc)
+  - Tabela `warming_log` (histórico diário de aquecimento)
+  - Funções PostgreSQL: `calc_warming_stage()`, `calc_daily_limit()`, `advance_warming_day()`, `can_send_message()`
+
+- **API de Warming** `/api/numeros-whatsapp/[id]/warming`:
+  - `GET` — status completo de aquecimento
+  - `PATCH` — ações: start, pause, resume, reset
+
+- **Lib `lib/warming.ts`**:
+  - `canSendMessage()` — verificação pré-envio (rate limiting + qualidade)
+  - `registerMessageSent()` — incrementa contadores após envio
+  - `advanceWarmingDay()` — cronjob diário para avançar estágios
+  - `getWarmingSummary()` — métricas agregadas para dashboard
+
+- **Componente `WarmingPanel`** — painel de aquecimento por número
+- **Dashboard `/warming`** — visão geral com cards, filtros e lista
+
+- **Prisma Schema** atualizado com campos de warming + modelo `WarmingLog`
+
+### 📊 Limites por estágio
+| Dia | Estágio | Msgs/dia |
+|---|---|---|
+| 0 | COLD | 10 |
+| 1-3 | WARMING_1_3 | 20 |
+| 4-7 | WARMING_4_7 | 50 |
+| 8-14 | WARMING_8_14 | 150 |
+| 15-21 | WARMING_15_21 | 500 |
+| 22+ | ACTIVE | 2000 |
+
+---
+
 ## Migrations futuras
 
 Para adicionar colunas/tabelas:

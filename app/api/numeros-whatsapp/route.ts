@@ -30,11 +30,14 @@ export async function GET(request: Request) {
       },
     });
 
+    const includeWarming = searchParams.get('includeWarming') === 'true';
+
     return NextResponse.json(
       (numeros ?? []).map((n: any) => ({
         ...n,
         createdAt: n?.createdAt?.toISOString?.() ?? '',
         updatedAt: n?.updatedAt?.toISOString?.() ?? '',
+        qualityHistory: includeWarming ? (n.qualityHistory ?? []) : undefined,
       }))
     );
   } catch (error: any) {

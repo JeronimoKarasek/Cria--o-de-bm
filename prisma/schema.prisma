@@ -163,6 +163,15 @@ model NumeroWhatsapp {
   pin2fa            String?   @map("pin_2fa")
   limiteMsg         String?   @default("250") @map("limite_msg")
   categoria         String?   @default("UTILITY")
+  warmingStage      String    @default("COLD") @map("warming_stage")
+  warmingStartedAt  DateTime? @map("warming_started_at")
+  warmingDay        Int       @default(0) @map("warming_day")
+  dailyMsgCount     Int       @default(0) @map("daily_msg_count")
+  dailyMsgLimit     Int       @default(10) @map("daily_msg_limit")
+  msgTotalSent      Int       @default(0) @map("msg_total_sent")
+  lastMsgAt         DateTime? @map("last_msg_at")
+  qualityHistory    Json?     @default("[]") @map("quality_history")
+  warmingNotes      String?   @map("warming_notes")
   contaMetaId       String    @map("conta_meta_id")
   contaMeta         ContaMeta @relation(fields: [contaMetaId], references: [id], onDelete: Cascade)
   empresaId         String    @map("empresa_id")
@@ -173,7 +182,27 @@ model NumeroWhatsapp {
   @@index([contaMetaId])
   @@index([empresaId])
   @@index([status])
+  @@index([warmingStage])
+  @@index([warmingDay])
   @@map("numeros_whatsapp")
+}
+
+model WarmingLog {
+  id             String    @id @default(cuid())
+  numeroId       String    @map("numero_id")
+  warmingDay     Int       @map("warming_day")
+  stage          String
+  msgSentToday   Int       @default(0) @map("msg_sent_today")
+  msgLimitToday  Int       @map("msg_limit_today")
+  qualityRating  String?   @map("quality_rating")
+  metaEvents     Json?     @default("[]") @map("meta_events")
+  notes          String?
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@index([numeroId])
+  @@index([warmingDay])
+  @@index([createdAt])
+  @@map("warming_log")
 }
 
 model ContaMetaHistorico {
