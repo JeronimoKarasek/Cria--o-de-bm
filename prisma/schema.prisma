@@ -67,7 +67,7 @@ model User {
   auditLogs AuditLog[]
 
   @@index([email])
-  @@map("users")
+  @@map("criabm_users")
 }
 
 model Empresa {
