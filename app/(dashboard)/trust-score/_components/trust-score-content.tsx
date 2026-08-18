@@ -22,7 +22,7 @@ function getScoreLabel(score: number): string {
   if (score >= 60) return 'Bom';
   if (score >= 40) return 'Regular';
   if (score >= 20) return 'Baixo';
-  return 'Cr\u00edtico';
+  return 'Crítico';
 }
 
 export function TrustScoreContent() {
@@ -55,15 +55,15 @@ export function TrustScoreContent() {
     <div className="space-y-6 max-w-[1200px] mx-auto">
       <div>
         <h1 className="font-display text-2xl font-bold tracking-tight">Trust Score</h1>
-        <p className="text-muted-foreground mt-1">Avalia\u00e7\u00e3o de prontid\u00e3o das empresas para verifica\u00e7\u00e3o Meta</p>
+        <p className="text-muted-foreground mt-1">Avaliação de prontidão das empresas para verificação Meta</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Score M\u00e9dio', value: avgScore, icon: BarChart3, color: 'text-blue-500', bg: 'bg-blue-50' },
+          { label: 'Score Médio', value: avgScore, icon: BarChart3, color: 'text-blue-500', bg: 'bg-blue-50' },
           { label: 'Excelentes', value: excellent, icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-50' },
           { label: 'Bons', value: good, icon: TrendingUp, color: 'text-blue-500', bg: 'bg-blue-50' },
-          { label: 'Cr\u00edticos', value: critical, icon: AlertTriangle, color: 'text-red-500', bg: 'bg-red-50' },
+          { label: 'Críticos', value: critical, icon: AlertTriangle, color: 'text-red-500', bg: 'bg-red-50' },
         ].map((card: any, i: number) => {
           const Icon = card?.icon;
           return (

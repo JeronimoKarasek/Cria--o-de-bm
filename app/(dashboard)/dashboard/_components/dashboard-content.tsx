@@ -23,7 +23,7 @@ const statusColors: Record<string, string> = {
 
 const statusLabels: Record<string, string> = {
   PENDENTE: 'Pendente',
-  EM_ANALISE: 'Em An\u00e1lise',
+  EM_ANALISE: 'Em Análise',
   APROVADA: 'Aprovada',
   REJEITADA: 'Rejeitada',
 };
@@ -67,7 +67,7 @@ export function DashboardContent() {
     { label: 'Pendentes', value: metrics?.empresasPendentes ?? 0, icon: Clock, color: 'text-yellow-500', bg: 'bg-yellow-50' },
     { label: 'Contas Meta', value: metrics?.totalContas ?? 0, icon: Facebook, color: 'text-indigo-500', bg: 'bg-indigo-50' },
     { label: 'Sites BMS', value: metrics?.totalSites ?? 0, icon: Globe, color: 'text-purple-500', bg: 'bg-purple-50' },
-    { label: 'Trust Score M\u00e9dio', value: metrics?.trustScoreMedio ?? 0, icon: BarChart3, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+    { label: 'Trust Score Médio', value: metrics?.trustScoreMedio ?? 0, icon: BarChart3, color: 'text-emerald-500', bg: 'bg-emerald-50' },
   ];
 
   if (loading) {
@@ -87,7 +87,7 @@ export function DashboardContent() {
     <div className="space-y-6 max-w-[1200px] mx-auto">
       <div>
         <h1 className="font-display text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Vis\u00e3o geral do sistema de verifica\u00e7\u00e3o</p>
+        <p className="text-muted-foreground mt-1">Visão geral do sistema de verificação</p>
       </div>
 
       {/* Metric Cards */}

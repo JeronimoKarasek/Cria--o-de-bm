@@ -9,7 +9,7 @@ import { registrarAuditLog } from '@/lib/audit';
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: 'N\u00e3o autorizado' }, { status: 401 });
+    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
     const empresa = await prisma.empresa.findUnique({
       where: { id: params?.id },
@@ -22,7 +22,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
       },
     });
 
-    if (!empresa) return NextResponse.json({ error: 'Empresa n\u00e3o encontrada' }, { status: 404 });
+    if (!empresa) return NextResponse.json({ error: 'Empresa não encontrada' }, { status: 404 });
 
     const serialized = {
       ...(empresa ?? {}),
@@ -44,7 +44,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: 'N\u00e3o autorizado' }, { status: 401 });
+    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
     const body = await request.json();
     const userId = (session?.user as any)?.id;
@@ -84,9 +84,9 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: 'N\u00e3o autorizado' }, { status: 401 });
+    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     const userRole = (session?.user as any)?.role;
-    if (userRole !== 'ADMIN') return NextResponse.json({ error: 'Sem permiss\u00e3o' }, { status: 403 });
+    if (userRole !== 'ADMIN') return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
 
     const userId = (session?.user as any)?.id;
     const empresa = await prisma.empresa.findUnique({ where: { id: params?.id } });

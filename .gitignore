@@ -51,3 +51,4 @@ _backup/
 # logs
 logs
 *.log
+.env*

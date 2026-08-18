@@ -28,7 +28,7 @@ export function DashboardShell({ session, children }: { session: any; children: 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const pathname = usePathname();
-  const userName = session?.user?.name ?? 'Usu\u00e1rio';
+  const userName = session?.user?.name ?? 'Usuário';
   const userRole = (session?.user as any)?.role ?? 'FUNCIONARIO';
 
   return (
@@ -90,7 +90,7 @@ export function DashboardShell({ session, children }: { session: any; children: 
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{userName}</p>
                 <p className="text-xs text-muted-foreground">
-                  {userRole === 'ADMIN' ? 'Administrador' : 'Funcion\u00e1rio'}
+                  {userRole === 'ADMIN' ? 'Administrador' : 'Funcionário'}
                 </p>
               </div>
             </div>

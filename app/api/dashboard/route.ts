@@ -8,7 +8,7 @@ import { prisma } from '@/lib/prisma';
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: 'N\u00e3o autorizado' }, { status: 401 });
+    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
     const [totalEmpresas, empresasAprovadas, empresasPendentes, empresasRejeitadas, empresasEmAnalise, totalContas, contasAtivas, totalSites, recentEmpresas, trustScoreAvg] = await Promise.all([
       prisma.empresa.count(),

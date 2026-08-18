@@ -31,7 +31,7 @@ export function LoginForm() {
         callbackUrl: '/dashboard',
       });
       if (res?.error) {
-        setError('Email ou senha inv\u00e1lidos');
+        setError('Email ou senha inválidos');
       } else if (res?.ok) {
         router.replace('/dashboard');
       }
@@ -55,7 +55,7 @@ export function LoginForm() {
             <ShieldCheck className="w-8 h-8" />
           </div>
           <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">MetaVerify</h1>
-          <p className="text-muted-foreground mt-1">Sistema de Verifica\u00e7\u00e3o Meta Business</p>
+          <p className="text-muted-foreground mt-1">Sistema de Verificação Meta Business</p>
         </div>
 
         <Card className="shadow-lg border-0">
@@ -112,7 +112,7 @@ export function LoginForm() {
               </Button>
             </form>
             <div className="mt-4 text-center text-sm text-muted-foreground">
-              N\u00e3o tem conta?{' '}
+              Não tem conta?{' '}
               <Link href="/signup" className="text-primary font-medium hover:underline">
                 Criar conta
               </Link>

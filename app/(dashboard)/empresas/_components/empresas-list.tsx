@@ -17,7 +17,7 @@ const statusColors: Record<string, string> = {
 };
 const statusLabels: Record<string, string> = {
   PENDENTE: 'Pendente',
-  EM_ANALISE: 'Em An\u00e1lise',
+  EM_ANALISE: 'Em Análise',
   APROVADA: 'Aprovada',
   REJEITADA: 'Rejeitada',
 };
@@ -87,7 +87,7 @@ export function EmpresasList() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nome, raz\u00e3o social ou CNPJ..."
+              placeholder="Buscar por nome, razão social ou CNPJ..."
               value={search}
               onChange={(e: any) => setSearch(e?.target?.value ?? '')}
               className="pl-10"
@@ -120,7 +120,7 @@ export function EmpresasList() {
           <CardContent className="py-12 text-center">
             <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-lg font-medium">Nenhuma empresa encontrada</p>
-            <p className="text-muted-foreground mt-1">Cadastre uma nova empresa para come\u00e7ar</p>
+            <p className="text-muted-foreground mt-1">Cadastre uma nova empresa para começar</p>
           </CardContent>
         </Card>
       ) : (

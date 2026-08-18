@@ -9,7 +9,7 @@ import { registrarAuditLog } from '@/lib/audit';
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: 'N\u00e3o autorizado' }, { status: 401 });
+    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
     const sites = await prisma.siteVerificacao.findMany({
       orderBy: { createdAt: 'desc' },
@@ -32,13 +32,13 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: 'N\u00e3o autorizado' }, { status: 401 });
+    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
     const body = await request.json();
     const { empresaId, dominio, template, segmento, nomeEmpresa, descricao, corPrimaria, corSecundaria, incluirTermos, incluirPrivacidade, incluirLgpd } = body ?? {};
 
     if (!empresaId || !segmento || !nomeEmpresa) {
-      return NextResponse.json({ error: 'Campos obrigat\u00f3rios faltando' }, { status: 400 });
+      return NextResponse.json({ error: 'Campos obrigatórios faltando' }, { status: 400 });
     }
 
     // Generate site content
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
 
 function gerarConteudoSite(params: any): string {
   const { nomeEmpresa, segmento, descricao, dominio, incluirTermos, incluirPrivacidade, incluirLgpd, corPrimaria, corSecundaria } = params ?? {};
-  const desc = descricao || `${nomeEmpresa} \u00e9 uma empresa l\u00edder no segmento de ${segmento}, comprometida com a excel\u00eancia e inova\u00e7\u00e3o.`;
+  const desc = descricao || `${nomeEmpresa} é uma empresa líder no segmento de ${segmento}, comprometida com a excelência e inovação.`;
 
   let html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -134,38 +134,38 @@ function gerarConteudoSite(params: any): string {
   </section>
 
   <section class="section" id="sobre">
-    <h3>Sobre N\u00f3s</h3>
+    <h3>Sobre Nós</h3>
     <p>${desc}</p>
-    <p>Atuamos no segmento de ${segmento ?? ''}, oferecendo solu\u00e7\u00f5es de alta qualidade para nossos clientes.</p>
+    <p>Atuamos no segmento de ${segmento ?? ''}, oferecendo soluções de alta qualidade para nossos clientes.</p>
   </section>
 
   <section class="section" id="contato">
     <h3>Contato</h3>
-    <p>Entre em contato conosco para saber mais sobre nossos servi\u00e7os.</p>
+    <p>Entre em contato conosco para saber mais sobre nossos serviços.</p>
     ${dominio ? `<p>Website: <a href="https://${dominio}">${dominio}</a></p>` : ''}
   </section>`;
 
   if (incluirTermos) {
     html += `\n\n  <section class="section" id="termos">
     <h3>Termos de Uso</h3>
-    <p>Ao acessar e utilizar este site, voc\u00ea concorda com os seguintes termos e condi\u00e7\u00f5es. O conte\u00fado deste site \u00e9 protegido por direitos autorais e de propriedade intelectual da ${nomeEmpresa ?? ''}.</p>
-    <p>\u00c9 proibida a reprodu\u00e7\u00e3o total ou parcial do conte\u00fado sem autoriza\u00e7\u00e3o pr\u00e9via. A ${nomeEmpresa ?? ''} reserva-se o direito de modificar estes termos a qualquer momento.</p>
+    <p>Ao acessar e utilizar este site, você concorda com os seguintes termos e condições. O conteúdo deste site é protegido por direitos autorais e de propriedade intelectual da ${nomeEmpresa ?? ''}.</p>
+    <p>É proibida a reprodução total ou parcial do conteúdo sem autorização prévia. A ${nomeEmpresa ?? ''} reserva-se o direito de modificar estes termos a qualquer momento.</p>
   </section>`;
   }
 
   if (incluirPrivacidade) {
     html += `\n\n  <section class="section" id="privacidade">
-    <h3>Pol\u00edtica de Privacidade</h3>
-    <p>A ${nomeEmpresa ?? ''} est\u00e1 comprometida com a prote\u00e7\u00e3o dos dados pessoais de seus clientes e visitantes. Coletamos apenas informa\u00e7\u00f5es necess\u00e1rias para a presta\u00e7\u00e3o de nossos servi\u00e7os.</p>
-    <p>Seus dados pessoais n\u00e3o ser\u00e3o compartilhados com terceiros sem seu consentimento expresso, exceto quando exigido por lei.</p>
+    <h3>Política de Privacidade</h3>
+    <p>A ${nomeEmpresa ?? ''} está comprometida com a proteção dos dados pessoais de seus clientes e visitantes. Coletamos apenas informações necessárias para a prestação de nossos serviços.</p>
+    <p>Seus dados pessoais não serão compartilhados com terceiros sem seu consentimento expresso, exceto quando exigido por lei.</p>
   </section>`;
   }
 
   if (incluirLgpd) {
     html += `\n\n  <section class="section" id="lgpd">
     <h3>Conformidade LGPD</h3>
-    <p>Em conformidade com a Lei Geral de Prote\u00e7\u00e3o de Dados (Lei n\u00ba 13.709/2018), a ${nomeEmpresa ?? ''} garante os direitos de acesso, corre\u00e7\u00e3o, exclus\u00e3o e portabilidade dos dados pessoais.</p>
-    <p>Para exercer seus direitos ou esclarecer d\u00favidas sobre o tratamento de dados, entre em contato com nosso Encarregado de Prote\u00e7\u00e3o de Dados.</p>
+    <p>Em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018), a ${nomeEmpresa ?? ''} garante os direitos de acesso, correção, exclusão e portabilidade dos dados pessoais.</p>
+    <p>Para exercer seus direitos ou esclarecer dúvidas sobre o tratamento de dados, entre em contato com nosso Encarregado de Proteção de Dados.</p>
   </section>`;
   }
 

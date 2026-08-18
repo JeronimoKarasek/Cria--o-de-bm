@@ -29,7 +29,7 @@ export function AuditoriaContent() {
     <div className="space-y-6 max-w-[1200px] mx-auto">
       <div>
         <h1 className="font-display text-2xl font-bold tracking-tight">Auditoria</h1>
-        <p className="text-muted-foreground mt-1">Hist\u00f3rico de a\u00e7\u00f5es realizadas no sistema</p>
+        <p className="text-muted-foreground mt-1">Histórico de ações realizadas no sistema</p>
       </div>
 
       {loading ? (
@@ -60,18 +60,18 @@ export function AuditoriaContent() {
                       <FileText className="w-5 h-5 text-muted-foreground" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{log?.descricao ?? 'A\u00e7\u00e3o'}</p>
+                      <p className="text-sm font-medium">{log?.descricao ?? 'Ação'}</p>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                         <User className="w-3 h-3" />
                         <span>{log?.user?.name ?? 'Sistema'}</span>
                         {log?.empresa?.nomeFantasia && (
                           <>
-                            <span>\u2022</span>
+                            <span>•</span>
                             <Building2 className="w-3 h-3" />
                             <span>{log.empresa.nomeFantasia}</span>
                           </>
                         )}
-                        <span>\u2022</span>
+                        <span>•</span>
                         <span>{log?.entidade ?? ''}</span>
                       </div>
                     </div>

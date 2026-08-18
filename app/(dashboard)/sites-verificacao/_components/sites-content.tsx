@@ -13,15 +13,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from 'sonner';
 
 const SEGMENTOS = [
-  'Tecnologia', 'Marketing Digital', 'E-commerce', 'Alimenta\u00e7\u00e3o',
-  'Moda e Vestu\u00e1rio', 'Sa\u00fade', 'Educa\u00e7\u00e3o', 'Finan\u00e7as',
-  'Imobili\u00e1rio', 'Automotivo', 'Turismo', 'Entretenimento', 'Outro'
+  'Tecnologia', 'Marketing Digital', 'E-commerce', 'Alimentação',
+  'Moda e Vestuário', 'Saúde', 'Educação', 'Finanças',
+  'Imobiliário', 'Automotivo', 'Turismo', 'Entretenimento', 'Outro'
 ];
 
 const TEMPLATES = [
   { id: 'institucional', label: 'Institucional', desc: 'Site corporativo completo' },
-  { id: 'landing', label: 'Landing Page', desc: 'P\u00e1gina \u00fanica de convers\u00e3o' },
-  { id: 'portfolio', label: 'Portf\u00f3lio', desc: 'Vitrine de servi\u00e7os' },
+  { id: 'landing', label: 'Landing Page', desc: 'Página única de conversão' },
+  { id: 'portfolio', label: 'Portfólio', desc: 'Vitrine de serviços' },
 ];
 
 export function SitesVerificacaoContent() {
@@ -92,7 +92,7 @@ export function SitesVerificacaoContent() {
     <div className="space-y-6 max-w-[1200px] mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight">Sites de Verifica\u00e7\u00e3o BMS</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight">Sites de Verificação BMS</h1>
           <p className="text-muted-foreground mt-1">Gere sites institucionais "Meta-ready" para suas empresas</p>
         </div>
         <Button onClick={() => setShowCreate(true)}><Plus className="w-4 h-4 mr-2" /> Gerar Novo Site</Button>
@@ -102,7 +102,7 @@ export function SitesVerificacaoContent() {
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Gerar Site de Verifica\u00e7\u00e3o</DialogTitle>
+            <DialogTitle>Gerar Site de Verificação</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -135,7 +135,7 @@ export function SitesVerificacaoContent() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Dom\u00ednio</Label>
+                <Label>Domínio</Label>
                 <Input value={form?.dominio ?? ''} onChange={(e: any) => setForm((prev: any) => ({ ...(prev ?? {}), dominio: e?.target?.value ?? '' }))} placeholder="exemplo.com.br" />
               </div>
               <div className="space-y-2">
@@ -152,14 +152,14 @@ export function SitesVerificacaoContent() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Cor Prim\u00e1ria</Label>
+                <Label>Cor Primária</Label>
                 <div className="flex items-center gap-2">
                   <input type="color" value={form?.corPrimaria ?? '#1877F2'} onChange={(e: any) => setForm((prev: any) => ({ ...(prev ?? {}), corPrimaria: e?.target?.value ?? '' }))} className="w-10 h-10 rounded border cursor-pointer" />
                   <Input value={form?.corPrimaria ?? ''} onChange={(e: any) => setForm((prev: any) => ({ ...(prev ?? {}), corPrimaria: e?.target?.value ?? '' }))} />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Cor Secund\u00e1ria</Label>
+                <Label>Cor Secundária</Label>
                 <div className="flex items-center gap-2">
                   <input type="color" value={form?.corSecundaria ?? '#42B72A'} onChange={(e: any) => setForm((prev: any) => ({ ...(prev ?? {}), corSecundaria: e?.target?.value ?? '' }))} className="w-10 h-10 rounded border cursor-pointer" />
                   <Input value={form?.corSecundaria ?? ''} onChange={(e: any) => setForm((prev: any) => ({ ...(prev ?? {}), corSecundaria: e?.target?.value ?? '' }))} />
@@ -167,16 +167,16 @@ export function SitesVerificacaoContent() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Descri\u00e7\u00e3o</Label>
+              <Label>Descrição</Label>
               <Textarea
                 value={form?.descricao ?? ''}
                 onChange={(e: any) => setForm((prev: any) => ({ ...(prev ?? {}), descricao: e?.target?.value ?? '' }))}
                 rows={2}
-                placeholder="Breve descri\u00e7\u00e3o da empresa..."
+                placeholder="Breve descrição da empresa..."
               />
             </div>
             <div className="space-y-2">
-              <Label>P\u00e1ginas Legais</Label>
+              <Label>Páginas Legais</Label>
               <div className="flex flex-wrap gap-4">
                 {[
                   { key: 'incluirTermos', label: 'Termos de Uso' },
@@ -226,7 +226,7 @@ export function SitesVerificacaoContent() {
           <CardContent className="py-12 text-center">
             <Globe className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-lg font-medium">Nenhum site gerado</p>
-            <p className="text-muted-foreground mt-1">Gere um site de verifica\u00e7\u00e3o BMS para suas empresas</p>
+            <p className="text-muted-foreground mt-1">Gere um site de verificação BMS para suas empresas</p>
           </CardContent>
         </Card>
       ) : (
@@ -254,9 +254,9 @@ export function SitesVerificacaoContent() {
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
                     <span>Template: {site?.template ?? ''}</span>
-                    <span>\u2022</span>
+                    <span>•</span>
                     <span>{site?.segmento ?? ''}</span>
-                    {site?.dominio && <><span>\u2022</span><span>{site.dominio}</span></>}
+                    {site?.dominio && <><span>•</span><span>{site.dominio}</span></>}
                   </div>
                   <div className="flex gap-2">
                     {site?.conteudoGerado && (

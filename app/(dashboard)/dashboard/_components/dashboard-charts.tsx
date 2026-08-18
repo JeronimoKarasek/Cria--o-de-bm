@@ -20,7 +20,7 @@ export function DashboardCharts({
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Distribui\u00e7\u00e3o de Trust Score</CardTitle>
+          <CardTitle className="text-lg">Distribuição de Trust Score</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-64">

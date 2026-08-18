@@ -134,7 +134,7 @@ export function SignupForm() {
               </Button>
             </form>
             <div className="mt-4 text-center text-sm text-muted-foreground">
-              J\u00e1 tem conta?{' '}
+              Já tem conta?{' '}
               <Link href="/login" className="text-primary font-medium hover:underline">
                 Entrar
               </Link>

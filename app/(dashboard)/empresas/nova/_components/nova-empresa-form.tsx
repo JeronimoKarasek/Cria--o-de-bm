@@ -12,9 +12,9 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 
 const SEGMENTOS = [
-  'Tecnologia', 'Marketing Digital', 'E-commerce', 'Alimenta\u00e7\u00e3o',
-  'Moda e Vestu\u00e1rio', 'Sa\u00fade', 'Educa\u00e7\u00e3o', 'Finan\u00e7as',
-  'Imobili\u00e1rio', 'Automotivo', 'Turismo', 'Entretenimento', 'Outro'
+  'Tecnologia', 'Marketing Digital', 'E-commerce', 'Alimentação',
+  'Moda e Vestuário', 'Saúde', 'Educação', 'Finanças',
+  'Imobiliário', 'Automotivo', 'Turismo', 'Entretenimento', 'Outro'
 ];
 
 export function NovaEmpresaForm() {
@@ -75,7 +75,7 @@ export function NovaEmpresaForm() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Raz\u00e3o Social *</Label>
+                <Label>Razão Social *</Label>
                 <Input value={form?.razaoSocial ?? ''} onChange={(e: any) => updateField('razaoSocial', e?.target?.value ?? '')} required />
               </div>
               <div className="space-y-2">
@@ -113,10 +113,10 @@ export function NovaEmpresaForm() {
             </div>
 
             <div className="border-t border-border pt-4">
-              <h3 className="font-medium mb-3">Endere\u00e7o</h3>
+              <h3 className="font-medium mb-3">Endereço</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2 sm:col-span-2">
-                  <Label>Endere\u00e7o</Label>
+                  <Label>Endereço</Label>
                   <Input value={form?.endereco ?? ''} onChange={(e: any) => updateField('endereco', e?.target?.value ?? '')} />
                 </div>
                 <div className="space-y-2">
@@ -137,7 +137,7 @@ export function NovaEmpresaForm() {
             </div>
 
             <div className="space-y-2">
-              <Label>Observa\u00e7\u00f5es</Label>
+              <Label>Observações</Label>
               <Textarea value={form?.observacoes ?? ''} onChange={(e: any) => updateField('observacoes', e?.target?.value ?? '')} rows={3} />
             </div>
           </CardContent>

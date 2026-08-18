@@ -9,7 +9,7 @@ import { registrarAuditLog } from '@/lib/audit';
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: 'N\u00e3o autorizado' }, { status: 401 });
+    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
     const { searchParams } = new URL(request?.url ?? 'http://localhost');
     const status = searchParams?.get?.('status') ?? '';
@@ -49,18 +49,18 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: 'N\u00e3o autorizado' }, { status: 401 });
+    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
     const body = await request.json();
     const { razaoSocial, nomeFantasia, cnpj, segmento, email, telefone, website, endereco, cidade, estado, cep, observacoes } = body ?? {};
 
     if (!razaoSocial || !nomeFantasia || !cnpj || !segmento || !email) {
-      return NextResponse.json({ error: 'Campos obrigat\u00f3rios faltando' }, { status: 400 });
+      return NextResponse.json({ error: 'Campos obrigatórios faltando' }, { status: 400 });
     }
 
     const existingCnpj = await prisma.empresa.findUnique({ where: { cnpj } });
     if (existingCnpj) {
-      return NextResponse.json({ error: 'CNPJ j\u00e1 cadastrado' }, { status: 400 });
+      return NextResponse.json({ error: 'CNPJ já cadastrado' }, { status: 400 });
     }
 
     const userId = (session?.user as any)?.id;

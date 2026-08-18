@@ -25,7 +25,7 @@ const statusColors: Record<string, string> = {
   REJEITADA: 'bg-red-100 text-red-800',
 };
 const statusLabels: Record<string, string> = {
-  PENDENTE: 'Pendente', EM_ANALISE: 'Em An\u00e1lise', APROVADA: 'Aprovada', REJEITADA: 'Rejeitada',
+  PENDENTE: 'Pendente', EM_ANALISE: 'Em Análise', APROVADA: 'Aprovada', REJEITADA: 'Rejeitada',
 };
 const statusIcons: Record<string, any> = {
   PENDENTE: Clock, EM_ANALISE: AlertTriangle, APROVADA: CheckCircle, REJEITADA: XCircle,
@@ -40,7 +40,7 @@ function formatCnpj(cnpj: string): string {
 function TrustScoreGauge({ score }: { score: number }) {
   const s = score ?? 0;
   const color = s >= 80 ? '#22c55e' : s >= 60 ? '#3b82f6' : s >= 40 ? '#f59e0b' : s >= 20 ? '#f97316' : '#ef4444';
-  const label = s >= 80 ? 'Excelente' : s >= 60 ? 'Bom' : s >= 40 ? 'Regular' : s >= 20 ? 'Baixo' : 'Cr\u00edtico';
+  const label = s >= 80 ? 'Excelente' : s >= 60 ? 'Bom' : s >= 40 ? 'Regular' : s >= 20 ? 'Baixo' : 'Crítico';
   return (
     <div className="flex flex-col items-center">
       <div className="relative w-32 h-32">
@@ -105,7 +105,7 @@ export function EmpresaDetail({ id }: { id: string }) {
     try {
       const res = await fetch(`/api/empresas/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        toast.success('Empresa exclu\u00edda');
+        toast.success('Empresa excluída');
         router.replace('/empresas');
       } else {
         const d = await res.json();
@@ -161,7 +161,7 @@ export function EmpresaDetail({ id }: { id: string }) {
     return (
       <div className="text-center py-12">
         <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-        <p className="text-lg font-medium">Empresa n\u00e3o encontrada</p>
+        <p className="text-lg font-medium">Empresa não encontrada</p>
         <Link href="/empresas"><Button variant="outline" className="mt-4">Voltar</Button></Link>
       </div>
     );
@@ -220,7 +220,7 @@ export function EmpresaDetail({ id }: { id: string }) {
         <div className="lg:col-span-2">
           <Tabs defaultValue="info" className="space-y-4">
             <TabsList>
-              <TabsTrigger value="info">Informa\u00e7\u00f5es</TabsTrigger>
+              <TabsTrigger value="info">Informações</TabsTrigger>
               <TabsTrigger value="docs">Documentos ({(empresa?.documentos ?? []).length})</TabsTrigger>
               <TabsTrigger value="meta">Contas Meta ({(empresa?.contasMeta ?? []).length})</TabsTrigger>
               <TabsTrigger value="sites">Sites ({(empresa?.sitesVerificacao ?? []).length})</TabsTrigger>
@@ -230,18 +230,18 @@ export function EmpresaDetail({ id }: { id: string }) {
               <Card>
                 <CardContent className="p-5 space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div><Label className="text-muted-foreground text-xs">Raz\u00e3o Social</Label><p className="font-medium">{empresa?.razaoSocial ?? 'N/A'}</p></div>
+                    <div><Label className="text-muted-foreground text-xs">Razão Social</Label><p className="font-medium">{empresa?.razaoSocial ?? 'N/A'}</p></div>
                     <div><Label className="text-muted-foreground text-xs">Nome Fantasia</Label><p className="font-medium">{empresa?.nomeFantasia ?? 'N/A'}</p></div>
                     <div><Label className="text-muted-foreground text-xs">Segmento</Label><p className="font-medium">{empresa?.segmento ?? 'N/A'}</p></div>
                     <div><Label className="text-muted-foreground text-xs">Email</Label><p className="font-medium">{empresa?.email ?? 'N/A'}</p></div>
-                    <div><Label className="text-muted-foreground text-xs">Telefone</Label><p className="font-medium">{empresa?.telefone ?? 'N\u00e3o informado'}</p></div>
-                    <div><Label className="text-muted-foreground text-xs">Website</Label><p className="font-medium">{empresa?.website || 'N\u00e3o informado'}</p></div>
+                    <div><Label className="text-muted-foreground text-xs">Telefone</Label><p className="font-medium">{empresa?.telefone ?? 'Não informado'}</p></div>
+                    <div><Label className="text-muted-foreground text-xs">Website</Label><p className="font-medium">{empresa?.website || 'Não informado'}</p></div>
                   </div>
                   {(empresa?.endereco || empresa?.cidade) && (
                     <div className="border-t border-border pt-4">
-                      <Label className="text-muted-foreground text-xs">Endere\u00e7o</Label>
+                      <Label className="text-muted-foreground text-xs">Endereço</Label>
                       <p className="font-medium">
-                        {[empresa?.endereco, empresa?.cidade, empresa?.estado, empresa?.cep].filter(Boolean).join(', ') || 'N\u00e3o informado'}
+                        {[empresa?.endereco, empresa?.cidade, empresa?.estado, empresa?.cep].filter(Boolean).join(', ') || 'Não informado'}
                       </p>
                     </div>
                   )}
@@ -320,7 +320,7 @@ export function EmpresaDetail({ id }: { id: string }) {
                   {(empresa?.sitesVerificacao ?? []).length === 0 ? (
                     <div className="text-center py-8">
                       <Globe className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">Nenhum site de verifica\u00e7\u00e3o gerado</p>
+                      <p className="text-muted-foreground">Nenhum site de verificação gerado</p>
                       <Link href={`/sites-verificacao?empresaId=${id}`}>
                         <Button className="mt-3" size="sm">Gerar Site BMS</Button>
                       </Link>
@@ -332,7 +332,7 @@ export function EmpresaDetail({ id }: { id: string }) {
                           <div className="flex items-center gap-3">
                             <Globe className="w-5 h-5 text-purple-600" />
                             <div>
-                              <p className="text-sm font-medium">{site?.dominio ?? 'Sem dom\u00ednio'}</p>
+                              <p className="text-sm font-medium">{site?.dominio ?? 'Sem domínio'}</p>
                               <p className="text-xs text-muted-foreground">Template: {site?.template ?? 'institucional'}</p>
                             </div>
                           </div>
@@ -362,11 +362,11 @@ export function EmpresaDetail({ id }: { id: string }) {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Hist\u00f3rico de Score</CardTitle>
+              <CardTitle className="text-base">Histórico de Score</CardTitle>
             </CardHeader>
             <CardContent>
               {(empresa?.trustScoreHistorico ?? []).length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Sem hist\u00f3rico</p>
+                <p className="text-sm text-muted-foreground text-center py-4">Sem histórico</p>
               ) : (
                 <div className="space-y-2">
                   {(empresa?.trustScoreHistorico ?? []).slice(0, 5).map((h: any) => (

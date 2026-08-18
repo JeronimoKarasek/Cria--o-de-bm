@@ -9,7 +9,7 @@ import { registrarAuditLog } from '@/lib/audit';
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: 'N\u00e3o autorizado' }, { status: 401 });
+    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
     const body = await request.json();
     const { tipo, nome, cloudStoragePath, isPublic } = body ?? {};
