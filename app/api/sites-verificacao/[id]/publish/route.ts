@@ -16,6 +16,7 @@ import {
   publishOnApp,
   provisionFreeSub,
   provisionDnsSub,
+  unpublishSite,
   publicSiteUrl,
   type ProvisionMode,
 } from '@/lib/site-provision';
@@ -33,18 +34,22 @@ const MODES: ProvisionMode[] = [
   'publish-app',
   'free-sub',
   'dns-sub',
+  'unpublish',
+  'rollback',
 ];
 
 /**
  * POST /api/sites-verificacao/[id]/publish
  * body: {
- *   mode?: 'dry-run' | 'local-mark' | 'publish-app' | 'free-sub' | 'dns-sub',
+ *   mode?: 'dry-run' | 'local-mark' | 'publish-app' | 'free-sub' | 'dns-sub' | 'unpublish' | 'rollback',
  *   metaPixelId?: string,
  *   publishedUrl?: string,
  *   parentDomain?: string,   // dns-sub
  *   subdomain?: string,      // dns-sub
  *   cnameTarget?: string,    // dns-sub
- *   createHostingSubdomain?: boolean
+ *   createHostingSubdomain?: boolean,
+ *   reason?: string,         // unpublish/rollback
+ *   clearHostingerMeta?: boolean
  * }
  */
 export async function POST(request: Request, ctx: Ctx) {
@@ -332,6 +337,36 @@ export async function POST(request: Request, ctx: Ctx) {
           { status: status >= 400 && status < 600 ? status : 500 }
         );
       }
+    }
+
+    // ---------- unpublish / rollback ----------
+    if (mode === 'unpublish' || mode === 'rollback') {
+      const result = await unpublishSite(id, {
+        reason: body?.reason || mode,
+        clearHostingerMeta: Boolean(body?.clearHostingerMeta),
+      });
+      await registrarAuditLog({
+        acao: mode === 'rollback' ? 'ROLLBACK_SITE' : 'UNPUBLISH_SITE',
+        descricao: `${mode}: ${result.previousUrl || 'sem-url'} → rascunho (${result.reason})`,
+        entidade: 'SiteVerificacao',
+        entidadeId: id,
+        userId,
+        empresaId: site.empresaId,
+        metadata: {
+          previousUrl: result.previousUrl,
+          reason: result.reason,
+          trustTotal: result.trust.total,
+          clearHostingerMeta: Boolean(body?.clearHostingerMeta),
+        },
+      });
+      return NextResponse.json({
+        mode,
+        site: serializeSite(result.site),
+        trust: result.trust,
+        previousUrl: result.previousUrl,
+        reason: result.reason,
+        note: result.note,
+      });
     }
 
     return NextResponse.json({ error: `mode inválido: ${mode}` }, { status: 400 });

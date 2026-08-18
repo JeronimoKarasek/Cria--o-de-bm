@@ -30,7 +30,9 @@ export type ProvisionMode =
   | 'local-mark'
   | 'publish-app'
   | 'free-sub'
-  | 'dns-sub';
+  | 'dns-sub'
+  | 'unpublish'
+  | 'rollback';
 
 export function getSitesPublicBaseUrl(): string {
   const raw =
@@ -451,6 +453,81 @@ export async function provisionDnsSub(
     });
     throw err;
   }
+}
+
+/**
+ * E4 — tira o site do ar (status rascunho, limpa publishedUrl).
+ * Não apaga conteudoGerado (permite republicar). DNS Hostinger NÃO é removido
+ * automaticamente (requer delete zone manual/API admin) — ver runbook.
+ */
+export async function unpublishSite(
+  siteId: string,
+  opts?: { reason?: string; clearHostingerMeta?: boolean }
+) {
+  const site = await prisma.siteVerificacao.findUnique({ where: { id: siteId } });
+  if (!site) throw new Error('Site não encontrado');
+
+  const reason = (opts?.reason || 'unpublish').slice(0, 500);
+  const updated = await prisma.siteVerificacao.update({
+    where: { id: siteId },
+    data: {
+      status: 'rascunho',
+      publishedUrl: null,
+      publishedAt: null,
+      lastPublishError: null,
+      deployProvider: site.deployProvider || 'vercel',
+      ...(opts?.clearHostingerMeta
+        ? {
+            hostingerDomain: null,
+            hostingerRef: null,
+            parentDomain: null,
+            dominioStrategy: 'APP',
+          }
+        : {}),
+    },
+  });
+
+  const trust = await recalcTrustForEmpresa(site.empresaId);
+
+  await prisma.provisionJob.create({
+    data: {
+      type: 'UNPUBLISH',
+      status: 'success',
+      payload: JSON.stringify({
+        siteId,
+        reason,
+        previousStatus: site.status,
+        previousUrl: site.publishedUrl,
+        previousDominio: site.dominio,
+        clearHostingerMeta: Boolean(opts?.clearHostingerMeta),
+      }),
+      result: JSON.stringify({ ok: true, status: 'rascunho' }),
+      attempts: 1,
+      siteId,
+      startedAt: new Date(),
+      finishedAt: new Date(),
+    },
+  });
+
+  return {
+    site: updated,
+    trust,
+    previousUrl: site.publishedUrl,
+    reason,
+    note:
+      'HTML /s/{id} deixa de servir (só status=publicado). DNS Hostinger, se existir, permanece até remoção manual (runbook E4).',
+  };
+}
+
+/** Alias runbook */
+export async function rollbackSite(
+  siteId: string,
+  opts?: { reason?: string; clearHostingerMeta?: boolean }
+) {
+  return unpublishSite(siteId, {
+    reason: opts?.reason || 'rollback',
+    clearHostingerMeta: opts?.clearHostingerMeta,
+  });
 }
 
 export function newOpaqueRef(prefix = 'pv'): string {

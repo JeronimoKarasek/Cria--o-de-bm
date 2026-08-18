@@ -80,6 +80,16 @@ Acesse `http://localhost:3000/login`. Credenciais default do seed:
 
 ---
 
+## 🌐 Sites de Verificação (E3/E4)
+
+- HTML público: `GET /s/{id}` (sem auth; só se `status=publicado`)
+- Publish modes: `dry-run` | `local-mark` | `publish-app` | `free-sub` | `dns-sub` | `unpublish` | `rollback`
+- **Runbook produção:** [`docs/runbook-sites-verificacao-e4.md`](docs/runbook-sites-verificacao-e4.md)
+- Flag Hostinger write: `FEATURE_HOSTINGER_LIVE` (prod default **false**)
+- Libs: `lib/site-template.ts`, `lib/site-provision.ts`, `lib/hostinger.ts`
+
+---
+
 ## ☁️ Deploy na Vercel
 
 1. **Importe o repositório** na Vercel.

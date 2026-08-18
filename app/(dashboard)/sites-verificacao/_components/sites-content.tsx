@@ -159,7 +159,14 @@ export function SitesVerificacaoContent() {
 
   const runPublish = async (
     siteId: string,
-    mode: 'dry-run' | 'local-mark' | 'publish-app' | 'free-sub' | 'dns-sub',
+    mode:
+      | 'dry-run'
+      | 'local-mark'
+      | 'publish-app'
+      | 'free-sub'
+      | 'dns-sub'
+      | 'unpublish'
+      | 'rollback',
     extra?: Record<string, unknown>
   ) => {
     setBusyId(siteId);
@@ -176,6 +183,7 @@ export function SitesVerificacaoContent() {
             ? ' (ative FEATURE_HOSTINGER_LIVE no env)'
             : '';
         toast.error((data?.error ?? 'Falha no publish') + detail);
+        fetchData();
         return;
       }
 
@@ -209,6 +217,9 @@ export function SitesVerificacaoContent() {
           `DNS ${data?.fqdn ?? ''} → ${data?.cnameTarget ?? ''} · ${data?.publishedUrl ?? ''}`
         );
         if (data?.publishedUrl) window.open(data.publishedUrl, '_blank');
+        fetchData();
+      } else if (mode === 'unpublish' || mode === 'rollback') {
+        toast.success(`Despublicado (${mode}) · trust ${data?.trust?.total ?? '—'}`);
         fetchData();
       } else {
         toast.success(
@@ -267,7 +278,7 @@ export function SitesVerificacaoContent() {
             Sites de Verificação BMS
           </h1>
           <p className="text-muted-foreground mt-1">
-            Template Meta-ready · publish-app / free-sub / DNS · checklist de trust (E3)
+            Template Meta-ready · publish-app / rollback · checklist de trust (E4)
           </p>
         </div>
         <Button onClick={() => setShowCreate(true)}>
@@ -769,6 +780,12 @@ export function SitesVerificacaoContent() {
                         </>
                       )}
                     </div>
+                    {site?.lastPublishError && (
+                      <div className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+                        <span className="font-semibold">lastPublishError: </span>
+                        {site.lastPublishError}
+                      </div>
+                    )}
                     <div className="flex flex-wrap gap-2">
                       {site?.conteudoGerado && (
                         <Button
@@ -839,6 +856,26 @@ export function SitesVerificacaoContent() {
                           onClick={() => window.open(site.publishedUrl, '_blank')}
                         >
                           <Globe className="w-4 h-4 mr-1" /> Abrir live
+                        </Button>
+                      )}
+                      {site?.status === 'publicado' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={busy}
+                          onClick={() => {
+                            if (
+                              confirm(
+                                'Despublicar (rollback)? /s/{id} deixa de servir. DNS Hostinger, se houver, permanece até limpeza manual.'
+                              )
+                            ) {
+                              runPublish(site.id, 'rollback', {
+                                reason: 'ui-rollback',
+                              });
+                            }
+                          }}
+                        >
+                          Despublicar
                         </Button>
                       )}
                       {site?.status !== 'publicado' && (
