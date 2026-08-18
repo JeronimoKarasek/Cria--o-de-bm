@@ -42,6 +42,7 @@ type DryRunResult = {
   siteId: string;
   statusAtual?: string;
   canonicalGuess?: string | null;
+  publicAppUrl?: string | null;
   artifact?: {
     checklist?: ChecklistItem[];
     scoreReady?: number;
@@ -58,7 +59,7 @@ type DryRunResult = {
     deltaPublicar?: number;
   };
   nextSteps?: string[];
-  hostinger?: { enabled?: boolean; note?: string };
+  hostinger?: { configured?: boolean; live?: boolean; enabled?: boolean; note?: string };
 };
 
 export function SitesVerificacaoContent() {
@@ -156,17 +157,25 @@ export function SitesVerificacaoContent() {
     }
   };
 
-  const runPublish = async (siteId: string, mode: 'dry-run' | 'local-mark') => {
+  const runPublish = async (
+    siteId: string,
+    mode: 'dry-run' | 'local-mark' | 'publish-app' | 'free-sub' | 'dns-sub',
+    extra?: Record<string, unknown>
+  ) => {
     setBusyId(siteId);
     try {
       const res = await fetch(`/api/sites-verificacao/${siteId}/publish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode }),
+        body: JSON.stringify({ mode, ...extra }),
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data?.error ?? 'Falha no publish');
+        const detail =
+          data?.hostinger && data.hostinger.live === false
+            ? ' (ative FEATURE_HOSTINGER_LIVE no env)'
+            : '';
+        toast.error((data?.error ?? 'Falha no publish') + detail);
         return;
       }
 
@@ -179,6 +188,28 @@ export function SitesVerificacaoContent() {
             data?.trust?.deltaPublicar ?? 0
           }`
         );
+      } else if (mode === 'publish-app') {
+        toast.success(
+          `Publicado no app · ${data?.publishedUrl || data?.publicPath || '/s/' + siteId} · trust ${
+            data?.trust?.total ?? '—'
+          }`
+        );
+        if (data?.publishedUrl) window.open(data.publishedUrl, '_blank');
+        fetchData();
+      } else if (mode === 'free-sub') {
+        toast.success(
+          `Free-sub ${data?.freeSubdomain ?? ''} · live ${data?.publishedUrl ?? ''} · trust ${
+            data?.trust?.total ?? '—'
+          }`
+        );
+        if (data?.publishedUrl) window.open(data.publishedUrl, '_blank');
+        fetchData();
+      } else if (mode === 'dns-sub') {
+        toast.success(
+          `DNS ${data?.fqdn ?? ''} → ${data?.cnameTarget ?? ''} · ${data?.publishedUrl ?? ''}`
+        );
+        if (data?.publishedUrl) window.open(data.publishedUrl, '_blank');
+        fetchData();
       } else {
         toast.success(
           `Marcado como publicado (local) · trust ${data?.trust?.total ?? '—'}`
@@ -236,7 +267,7 @@ export function SitesVerificacaoContent() {
             Sites de Verificação BMS
           </h1>
           <p className="text-muted-foreground mt-1">
-            Template Meta-ready · dry-run de publish · checklist de trust (E2)
+            Template Meta-ready · publish-app / free-sub / DNS · checklist de trust (E3)
           </p>
         </div>
         <Button onClick={() => setShowCreate(true)}>
@@ -603,15 +634,49 @@ export function SitesVerificacaoContent() {
                   </Button>
                 )}
                 {dryRun.statusAtual !== 'publicado' && (
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setDryRunOpen(false);
-                      runPublish(dryRun.siteId, 'local-mark');
-                    }}
+                  <>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setDryRunOpen(false);
+                        runPublish(dryRun.siteId, 'publish-app');
+                      }}
+                    >
+                      <Upload className="w-4 h-4 mr-1" /> Publicar no app
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setDryRunOpen(false);
+                        runPublish(dryRun.siteId, 'local-mark');
+                      }}
+                    >
+                      Local-mark
+                    </Button>
+                    {dryRun.hostinger?.live && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setDryRunOpen(false);
+                          runPublish(dryRun.siteId, 'free-sub');
+                        }}
+                      >
+                        Free-sub Hostinger
+                      </Button>
+                    )}
+                  </>
+                )}
+                {dryRun.publicAppUrl && (
+                  <a
+                    href={dryRun.publicAppUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs underline text-muted-foreground self-center"
                   >
-                    <Upload className="w-4 h-4 mr-1" /> Marcar publicado (local)
-                  </Button>
+                    URL app: {dryRun.publicAppUrl}
+                  </a>
                 )}
               </div>
             </div>
@@ -757,14 +822,41 @@ export function SitesVerificacaoContent() {
                           onClick={() => {
                             if (
                               confirm(
-                                'Marcar como publicado localmente? (sem Hostinger — E3). Trust será recalculado.'
+                                'Publicar no app (URL pública /s/{id})? Trust será recalculado.'
                               )
                             ) {
-                              runPublish(site.id, 'local-mark');
+                              runPublish(site.id, 'publish-app');
                             }
                           }}
                         >
-                          <Upload className="w-4 h-4 mr-1" /> Publicar local
+                          <Upload className="w-4 h-4 mr-1" /> Publicar app
+                        </Button>
+                      )}
+                      {site?.status === 'publicado' && site?.publishedUrl && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(site.publishedUrl, '_blank')}
+                        >
+                          <Globe className="w-4 h-4 mr-1" /> Abrir live
+                        </Button>
+                      )}
+                      {site?.status !== 'publicado' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={busy}
+                          onClick={() => {
+                            if (
+                              confirm(
+                                'Gerar free-sub Hostinger + publicar no app? Requer FEATURE_HOSTINGER_LIVE=true.'
+                              )
+                            ) {
+                              runPublish(site.id, 'free-sub');
+                            }
+                          }}
+                        >
+                          Free-sub
                         </Button>
                       )}
                     </div>

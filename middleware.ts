@@ -15,6 +15,7 @@ export default withAuth(
           pathname?.startsWith('/api/auth') ||
           pathname?.startsWith('/api/signup') ||
           pathname?.startsWith('/api/meta-webhook') ||
+          pathname?.startsWith('/s/') ||
           pathname === '/'
         ) {
           return true;
@@ -27,6 +28,6 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.svg|og-image.png|api/auth|api/signup|api/meta-webhook).*)',
+    '/((?!_next/static|_next/image|favicon.svg|og-image.png|api/auth|api/signup|api/meta-webhook|s/).*)',
   ],
 };

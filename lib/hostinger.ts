@@ -150,6 +150,96 @@ export async function listHostingOrders(): Promise<unknown> {
   return hostingerFetch('/api/hosting/v1/orders');
 }
 
+/** FEATURE_HOSTINGER_LIVE=true habilita writes (free-sub, DNS, subdomain). */
+export function isHostingerLiveEnabled(): boolean {
+  const v = (process.env.FEATURE_HOSTINGER_LIVE || '').trim().toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes' || v === 'on';
+}
+
+export type FreeSubdomainResult = {
+  domain: string;
+  [key: string]: unknown;
+};
+
+/** POST /api/hosting/v1/domains/free-subdomains — gera *.hostingersite.com */
+export async function generateFreeSubdomain(): Promise<FreeSubdomainResult> {
+  const data = await hostingerFetch<FreeSubdomainResult>(
+    '/api/hosting/v1/domains/free-subdomains',
+    { method: 'POST', body: JSON.stringify({}) }
+  );
+  return data;
+}
+
+export type DnsZoneUpdate = {
+  overwrite?: boolean;
+  zone: Array<{
+    name: string;
+    type: string;
+    ttl?: number;
+    records: Array<{ content: string }>;
+  }>;
+};
+
+/** PUT /api/dns/v1/zones/{domain} */
+export async function updateDnsZone(
+  domain: string,
+  payload: DnsZoneUpdate
+): Promise<unknown> {
+  const d = encodeURIComponent(domain);
+  return hostingerFetch(`/api/dns/v1/zones/${d}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      overwrite: payload.overwrite ?? true,
+      zone: payload.zone,
+    }),
+  });
+}
+
+/** DELETE /api/dns/v1/zones/{domain} — filters name+type */
+export async function deleteDnsRecords(
+  domain: string,
+  filters: Array<{ name: string; type: string }>
+): Promise<unknown> {
+  const d = encodeURIComponent(domain);
+  return hostingerFetch(`/api/dns/v1/zones/${d}`, {
+    method: 'DELETE',
+    body: JSON.stringify({ filters }),
+  });
+}
+
+/** POST /api/hosting/v1/accounts/{username}/websites/{domain}/subdomains */
+export async function createWebsiteSubdomain(
+  username: string,
+  parentDomain: string,
+  body: {
+    subdomain: string;
+    directory?: string | null;
+    is_using_public_directory?: boolean;
+  }
+): Promise<unknown> {
+  const u = encodeURIComponent(username);
+  const d = encodeURIComponent(parentDomain);
+  return hostingerFetch(
+    `/api/hosting/v1/accounts/${u}/websites/${d}/subdomains`,
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }
+  );
+}
+
+/** GET /api/hosting/v1/accounts/{username}/websites/{domain}/subdomains */
+export async function listWebsiteSubdomains(
+  username: string,
+  parentDomain: string
+): Promise<unknown> {
+  const u = encodeURIComponent(username);
+  const d = encodeURIComponent(parentDomain);
+  return hostingerFetch(
+    `/api/hosting/v1/accounts/${u}/websites/${d}/subdomains`
+  );
+}
+
 /**
  * Health/status aggregate for admin dashboard (read-only).
  * Never returns the raw token.
