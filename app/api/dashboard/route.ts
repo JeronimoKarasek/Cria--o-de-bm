@@ -43,6 +43,47 @@ export async function GET() {
       _count: { segmento: true },
     });
 
+    // Hostinger health (best-effort; não derruba o dashboard se falhar)
+    let hostinger: {
+      ok: boolean;
+      configured: boolean;
+      domainsCount: number;
+      websitesCount: number;
+      label: string;
+      error?: string;
+    } = {
+      ok: false,
+      configured: false,
+      domainsCount: 0,
+      websitesCount: 0,
+      label: 'Hostinger: —',
+    };
+    try {
+      const { getHostingerStatus } = await import('@/lib/hostinger');
+      const h = await getHostingerStatus();
+      hostinger = {
+        ok: h.ok,
+        configured: h.configured,
+        domainsCount: h.domainsCount,
+        websitesCount: h.websitesCount,
+        label: h.ok
+          ? `Hostinger: OK · ${h.domainsCount} domínios`
+          : h.configured
+            ? `Hostinger: erro · ${h.error || 'falha'}`
+            : 'Hostinger: não configurado',
+        error: h.error,
+      };
+    } catch (e: any) {
+      hostinger = {
+        ok: false,
+        configured: Boolean(process.env.HOSTINGER_API_TOKEN),
+        domainsCount: 0,
+        websitesCount: 0,
+        label: 'Hostinger: erro',
+        error: e?.message,
+      };
+    }
+
     return NextResponse.json({
       metrics: {
         totalEmpresas,
@@ -55,6 +96,7 @@ export async function GET() {
         totalSites,
         trustScoreMedio: Math.round(trustScoreAvg?._avg?.trustScore ?? 0),
       },
+      hostinger,
       recentEmpresas: (recentEmpresas ?? []).map((e: any) => ({
         ...e,
         createdAt: e?.createdAt?.toISOString?.() ?? '',

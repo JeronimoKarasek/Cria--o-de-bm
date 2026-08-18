@@ -234,13 +234,49 @@ model SiteVerificacao {
   incluirLgpd        Boolean  @default(true) @map("incluir_lgpd")
   conteudoGerado     String?  @map("conteudo_gerado") @db.Text
   status             String   @default("rascunho")
+  // Publish / Hostinger híbrido (aditivo E1)
+  publishedUrl       String?  @map("published_url")
+  hostingerDomain    String?  @map("hostinger_domain")
+  deployProvider     String?  @map("deploy_provider") // vercel | hostinger | github_pages | none
+  lastPublishError   String?  @map("last_publish_error") @db.Text
+  dominioStrategy    String?  @map("dominio_strategy") // SUB | GUARDA_NOVO | DEDICADO | FREE_SUB
+  parentDomain       String?  @map("parent_domain")
+  hostingerRef       String?  @map("hostinger_ref")
+  publishedAt        DateTime? @map("published_at")
   empresaId          String   @map("empresa_id")
   empresa            Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 
   @@index([empresaId])
+  @@index([status])
   @@map("sites_verificacao")
+}
+
+// Fila de provisionamento híbrido (Hostinger DNS/sub + publish)
+model ProvisionJob {
+  id          String    @id @default(cuid())
+  type        String // FREE_SUB | DNS_SUB | BUY_DOMAIN | PUBLISH_SITE | RECALC_TRUST
+  status      String    @default("pending") // pending | running | success | error | cancelled
+  payload     String    @db.Text // JSON
+  result      String?   @db.Text // JSON
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(5) @map("max_attempts")
+  lastError   String?   @map("last_error") @db.Text
+  empresaId   String?   @map("empresa_id")
+  siteId      String?   @map("site_id")
+  scheduledAt DateTime? @map("scheduled_at")
+  startedAt   DateTime? @map("started_at")
+  finishedAt  DateTime? @map("finished_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([type])
+  @@index([empresaId])
+  @@index([siteId])
+  @@index([createdAt])
+  @@map("provision_jobs")
 }
 
 model TrustScoreHistorico {

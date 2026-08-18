@@ -85,9 +85,35 @@ export function DashboardContent() {
 
   return (
     <div className="space-y-6 max-w-[1200px] mx-auto">
-      <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Visão geral do sistema de verificação</p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Visão geral do sistema de verificação</p>
+        </div>
+        {data?.hostinger && (
+          <div
+            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm ${
+              data.hostinger.ok
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                : data.hostinger.configured
+                  ? 'border-red-200 bg-red-50 text-red-800'
+                  : 'border-amber-200 bg-amber-50 text-amber-900'
+            }`}
+            title={data.hostinger.error || data.hostinger.label}
+          >
+            <span
+              className={`h-2 w-2 rounded-full ${
+                data.hostinger.ok ? 'bg-emerald-500' : data.hostinger.configured ? 'bg-red-500' : 'bg-amber-500'
+              }`}
+            />
+            <span className="font-medium">{data.hostinger.label}</span>
+            {data.hostinger.ok && data.hostinger.websitesCount != null && (
+              <span className="text-muted-foreground hidden sm:inline">
+                · {data.hostinger.websitesCount} site(s) hosting
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Metric Cards */}
