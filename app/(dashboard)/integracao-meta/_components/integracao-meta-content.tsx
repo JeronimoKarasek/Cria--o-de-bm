@@ -7,7 +7,7 @@ import {
   Settings, Key, Globe, Save, CheckCircle2, AlertTriangle,
   RefreshCw, Zap, Shield, Phone, FileText, BarChart3,
   ExternalLink, Copy, Eye, EyeOff, BookOpen, Webhook,
-  Download, Loader2, XCircle, Server, Clock, Unplug, Facebook,
+  Download, Loader2, XCircle, Server, Clock, Unplug, Facebook, Factory, Plus,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -100,6 +100,22 @@ export function IntegracaoMetaContent() {
   const [empresas, setEmpresas] = useState<any[]>([]);
   const [selectedEmpresaId, setSelectedEmpresaId] = useState('');
   const [oauthConnecting, setOauthConnecting] = useState(false);
+  const [factoryStatus, setFactoryStatus] = useState<any>(null);
+  const [factoryLoading, setFactoryLoading] = useState(false);
+  const [factoryBusy, setFactoryBusy] = useState(false);
+  const [factoryResult, setFactoryResult] = useState<any>(null);
+  const [factoryForm, setFactoryForm] = useState({
+    action: 'create_bm' as 'create_bm' | 'create_waba' | 'add_phone',
+    name: '',
+    surveyEmail: '',
+    vertical: 'OTHER',
+    businessId: '',
+    wabaId: '',
+    cc: '55',
+    phone_number: '',
+    verified_name: '',
+    dryRun: true,
+  });
 
   const [form, setForm] = useState({
     appId: '', appSecret: '', accessToken: '', webhookToken: '',
@@ -172,6 +188,24 @@ export function IntegracaoMetaContent() {
     } catch { /* ignore */ }
   };
 
+  const fetchFactoryStatus = useCallback(async () => {
+    if (!isAdmin) return;
+    setFactoryLoading(true);
+    try {
+      const res = await fetch('/api/meta-api/factory');
+      const data = await res.json().catch(() => null);
+      setFactoryStatus(data);
+    } catch {
+      setFactoryStatus(null);
+    } finally {
+      setFactoryLoading(false);
+    }
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (isAdmin) fetchFactoryStatus();
+  }, [isAdmin, fetchFactoryStatus]);
+
   const handleConnectFacebook = () => {
     if (!form.appId && !config?.appId) {
       toast.error('Salve o App ID (e App Secret) antes de conectar com Facebook');
@@ -186,6 +220,77 @@ export function IntegracaoMetaContent() {
     q.set('returnTo', '/integracao-meta');
     if (selectedEmpresaId) q.set('empresaId', selectedEmpresaId);
     window.location.href = `/api/meta-api/oauth/start?${q.toString()}`;
+  };
+
+  const handleFactorySubmit = async () => {
+    if (!selectedEmpresaId) {
+      toast.error('Selecione a Empresa (mesmo campo do auto-import OAuth)');
+      return;
+    }
+    if (factoryForm.action === 'create_bm') {
+      if (!factoryForm.name.trim()) {
+        toast.error('Nome da BM é obrigatório');
+        return;
+      }
+      if (!factoryForm.surveyEmail.includes('@')) {
+        toast.error('E-mail de survey obrigatório para create_bm');
+        return;
+      }
+    }
+    if (factoryForm.action === 'create_waba' && !factoryForm.businessId.trim()) {
+      toast.error('businessId obrigatório');
+      return;
+    }
+    if (factoryForm.action === 'add_phone') {
+      if (!factoryForm.wabaId.trim() || !factoryForm.phone_number.trim() || !factoryForm.verified_name.trim()) {
+        toast.error('wabaId, telefone e verified_name obrigatórios');
+        return;
+      }
+    }
+    const live = Boolean(factoryStatus?.live);
+    if (!factoryForm.dryRun && live) {
+      const ok = window.confirm(
+        'FEATURE_META_CREATE_LIVE=true e dry-run DESLIGADO. Isso cria recurso REAL na Meta. Continuar?'
+      );
+      if (!ok) return;
+    }
+    setFactoryBusy(true);
+    setFactoryResult(null);
+    try {
+      const body: any = {
+        action: factoryForm.action,
+        empresaId: selectedEmpresaId,
+        dryRun: factoryForm.dryRun,
+        name: factoryForm.name || undefined,
+        surveyEmail: factoryForm.surveyEmail || undefined,
+        vertical: factoryForm.vertical || 'OTHER',
+        businessId: factoryForm.businessId || undefined,
+        wabaId: factoryForm.wabaId || undefined,
+        cc: factoryForm.cc || '55',
+        phone_number: factoryForm.phone_number || undefined,
+        verified_name: factoryForm.verified_name || undefined,
+        requestCode: factoryForm.action === 'add_phone' ? true : undefined,
+      };
+      const res = await fetch('/api/meta-api/factory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      setFactoryResult(data);
+      if (!res.ok || data?.success === false) {
+        toast.error(data?.error || 'Factory falhou');
+      } else if (data?.dryRun) {
+        toast.success(data?.message || 'Dry-run OK — nada criado na Meta');
+      } else {
+        toast.success('Factory OK — recurso criado/persistido');
+        fetchFactoryStatus();
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Erro na factory');
+    } finally {
+      setFactoryBusy(false);
+    }
   };
 
   const handleSave = async () => {
@@ -312,15 +417,40 @@ export function IntegracaoMetaContent() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-950 space-y-2">
+                <p className="font-semibold text-sm flex items-center gap-1">
+                  <AlertTriangle className="w-4 h-4" /> Erro “domínio não incluído nos domínios do app”
+                </p>
+                <p>
+                  É configuração no Meta App (mesmo App ID salvo abaixo), não bug do Cria-BM. Preencha
+                  <strong> os três</strong> campos:
+                </p>
+                <ol className="list-decimal ml-4 space-y-1">
+                  <li>
+                    <strong>Configurações → Básico → Domínios do app:</strong>{' '}
+                    <code className="bg-white/80 px-1 rounded">cria-o-de-bm.vercel.app</code>
+                    <span className="text-muted-foreground"> (sem https://)</span>
+                  </li>
+                  <li>
+                    <strong>Adicionar plataforma → Site → URL do site:</strong>{' '}
+                    <code className="bg-white/80 px-1 rounded">https://cria-o-de-bm.vercel.app/</code>
+                  </li>
+                  <li>
+                    <strong>Facebook Login → Configurações → URI de redirecionamento OAuth válido:</strong>{' '}
+                    <code className="bg-white/80 px-1 rounded break-all">
+                      https://cria-o-de-bm.vercel.app/api/meta-api/oauth/callback
+                    </code>
+                  </li>
+                  <li>Salve no Meta → aguarde 1–2 min → tente de novo. Em Development, seu user precisa ser role do app.</li>
+                </ol>
+              </div>
+
               <div className="p-3 bg-white rounded-lg border text-xs text-muted-foreground space-y-1">
                 <p className="font-medium text-foreground text-sm">Pré-requisitos no Meta for Developers</p>
                 <ol className="list-decimal ml-4 space-y-0.5">
                   <li>App tipo Business com produto <strong>Facebook Login</strong> (ou Login for Business).</li>
                   <li>
-                    Valid OAuth Redirect URI:{' '}
-                    <code className="bg-muted px-1 rounded">
-                      https://cria-o-de-bm.vercel.app/api/meta-api/oauth/callback
-                    </code>
+                    Domínios + Site URL + Redirect URI (checklist amarelo acima). App ID do painel = App ID do developers.
                   </li>
                   <li>
                     Permissões (App Review se app Live):{' '}
@@ -373,6 +503,193 @@ export function IntegracaoMetaContent() {
                   </a>
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* E5 Meta Factory */}
+          <Card className="border-violet-300 bg-gradient-to-br from-violet-50/80 to-white">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Factory className="w-5 h-5 text-violet-700" /> Factory Meta (E5) — criar BM / WABA / número
+              </CardTitle>
+              <CardDescription>
+                Cria recursos novos na Graph API. Default seguro = dry-run.
+                Writes reais só com <code className="text-xs bg-muted px-1 rounded">FEATURE_META_CREATE_LIVE=true</code> no Vercel.
+                Conectar BM existente continua sendo o botão Facebook acima (E5a).
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <Badge variant={factoryStatus?.live ? 'default' : 'secondary'}>
+                  LIVE: {factoryLoading ? '…' : factoryStatus?.live ? 'ON' : 'OFF (dry-run forçado)'}
+                </Badge>
+                {factoryStatus?.tokenSource && (
+                  <Badge variant="outline">token: {factoryStatus.tokenSource}</Badge>
+                )}
+                {factoryStatus?.tokenError && (
+                  <span className="text-xs text-amber-700">{factoryStatus.tokenError}</span>
+                )}
+                <Button type="button" variant="ghost" size="sm" onClick={fetchFactoryStatus} disabled={factoryLoading}>
+                  <RefreshCw className={`w-3 h-3 mr-1 ${factoryLoading ? 'animate-spin' : ''}`} /> Status
+                </Button>
+              </div>
+
+              {(factoryStatus?.businesses?.length ?? 0) > 0 && (
+                <div className="text-xs border rounded-md p-2 bg-white max-h-28 overflow-auto">
+                  <p className="font-medium mb-1">BMs no token ({factoryStatus.businesses.length})</p>
+                  <ul className="space-y-0.5">
+                    {factoryStatus.businesses.map((b: any) => (
+                      <li key={b.id} className="flex justify-between gap-2">
+                        <span>{b.name}</span>
+                        <button
+                          type="button"
+                          className="text-violet-700 underline"
+                          onClick={() =>
+                            setFactoryForm((p) => ({ ...p, businessId: b.id, action: p.action === 'create_bm' ? 'create_waba' : p.action }))
+                          }
+                        >
+                          usar {b.id}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1 sm:col-span-2">
+                  <Label>Ação</Label>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={factoryForm.action}
+                    onChange={(e: any) =>
+                      setFactoryForm((p) => ({
+                        ...p,
+                        action: e.target.value as 'create_bm' | 'create_waba' | 'add_phone',
+                      }))
+                    }
+                  >
+                    <option value="create_bm">create_bm — nova Business Manager</option>
+                    <option value="create_waba">create_waba — WABA no BM</option>
+                    <option value="add_phone">add_phone — número no WABA</option>
+                  </select>
+                  <p className="text-xs text-muted-foreground">
+                    Empresa: use o select do card Facebook (auto-import). create_bm na Meta exige capability de business creation no app.
+                  </p>
+                </div>
+
+                {(factoryForm.action === 'create_bm' || factoryForm.action === 'create_waba') && (
+                  <div className="space-y-1">
+                    <Label>Nome</Label>
+                    <Input
+                      value={factoryForm.name}
+                      onChange={(e: any) => setFactoryForm((p) => ({ ...p, name: e.target.value }))}
+                      placeholder={factoryForm.action === 'create_bm' ? 'BM Cliente X' : 'WABA Cliente X'}
+                    />
+                  </div>
+                )}
+
+                {factoryForm.action === 'create_bm' && (
+                  <>
+                    <div className="space-y-1">
+                      <Label>E-mail survey</Label>
+                      <Input
+                        type="email"
+                        value={factoryForm.surveyEmail}
+                        onChange={(e: any) => setFactoryForm((p) => ({ ...p, surveyEmail: e.target.value }))}
+                        placeholder="admin@cliente.com"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Vertical</Label>
+                      <Input
+                        value={factoryForm.vertical}
+                        onChange={(e: any) => setFactoryForm((p) => ({ ...p, vertical: e.target.value }))}
+                        placeholder="OTHER"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {(factoryForm.action === 'create_waba' || factoryForm.action === 'add_phone') && (
+                  <div className="space-y-1">
+                    <Label>businessId (Meta)</Label>
+                    <Input
+                      value={factoryForm.businessId}
+                      onChange={(e: any) => setFactoryForm((p) => ({ ...p, businessId: e.target.value }))}
+                      placeholder="ID do Business Portfolio"
+                    />
+                  </div>
+                )}
+
+                {factoryForm.action === 'add_phone' && (
+                  <>
+                    <div className="space-y-1">
+                      <Label>wabaId</Label>
+                      <Input
+                        value={factoryForm.wabaId}
+                        onChange={(e: any) => setFactoryForm((p) => ({ ...p, wabaId: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>DDI / número</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          className="w-20"
+                          value={factoryForm.cc}
+                          onChange={(e: any) => setFactoryForm((p) => ({ ...p, cc: e.target.value }))}
+                        />
+                        <Input
+                          value={factoryForm.phone_number}
+                          onChange={(e: any) => setFactoryForm((p) => ({ ...p, phone_number: e.target.value }))}
+                          placeholder="11999999999"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1 sm:col-span-2">
+                      <Label>verified_name (nome exibido WA)</Label>
+                      <Input
+                        value={factoryForm.verified_name}
+                        onChange={(e: any) => setFactoryForm((p) => ({ ...p, verified_name: e.target.value }))}
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="flex items-center gap-2 sm:col-span-2">
+                  <input
+                    id="factory-dryrun"
+                    type="checkbox"
+                    checked={factoryForm.dryRun}
+                    onChange={(e: any) => setFactoryForm((p) => ({ ...p, dryRun: Boolean(e.target.checked) }))}
+                    className="h-4 w-4"
+                  />
+                  <Label htmlFor="factory-dryrun" className="font-normal cursor-pointer">
+                    dry-run (recomendado) — não chama create real mesmo com LIVE on
+                  </Label>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  onClick={handleFactorySubmit}
+                  disabled={factoryBusy}
+                  className="bg-violet-700 hover:bg-violet-800 text-white"
+                >
+                  {factoryBusy ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Executando...</>
+                  ) : (
+                    <><Plus className="w-4 h-4 mr-2" /> Executar factory</>
+                  )}
+                </Button>
+              </div>
+
+              {factoryResult && (
+                <pre className="text-xs bg-slate-950 text-slate-100 p-3 rounded-md overflow-auto max-h-48">
+                  {JSON.stringify(factoryResult, null, 2)}
+                </pre>
+              )}
             </CardContent>
           </Card>
 

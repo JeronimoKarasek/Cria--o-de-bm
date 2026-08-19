@@ -18,19 +18,41 @@ Permitir que um admin autentique com a conta Facebook dona da Business Manager e
    - se `empresaId` no state: upsert `ContaMeta` + WABA + números (mesmo padrão do import manual);
    - audit log + redirect `/integracao-meta?oauth=ok&bms=N`.
 
-## Config no Meta App
+## Config no Meta App (obrigatório — evita “domínio não incluído”)
 
-1. [developers.facebook.com/apps](https://developers.facebook.com/apps/) → app Business.
-2. Produto **Facebook Login** (ou Login for Business).
-3. **Valid OAuth Redirect URIs**:
-   - Prod: `https://cria-o-de-bm.vercel.app/api/meta-api/oauth/callback`
-   - Local: `http://localhost:3000/api/meta-api/oauth/callback`
-4. Permissões (Development: roles do app; Live: App Review):
+Erro comum: **"Não é possível carregar a URL / O domínio dessa URL não está incluído nos domínios do app."**
+
+Isso **não** é bug do Cria-BM: o App ID salvo no painel ainda não tem o host de produção autorizado.
+
+1. [developers.facebook.com/apps](https://developers.facebook.com/apps/) → **seu** App (mesmo App ID da Integração Meta).
+2. **Configurações → Básico**:
+   - **Domínios do app** (`App Domains`): `cria-o-de-bm.vercel.app`  
+     (sem `https://`, sem path)
+   - Se pedir **URL da Política de Privacidade** / Termos: use as do site de verificação ou página pública sua.
+   - **Adicionar plataforma → Site** (se ainda não tiver):
+     - **URL do site**: `https://cria-o-de-bm.vercel.app/`
+3. Produto **Facebook Login** → **Configurações**:
+   - **URIs de redirecionamento do OAuth válidos**:
+     - Prod: `https://cria-o-de-bm.vercel.app/api/meta-api/oauth/callback`
+     - Local: `http://localhost:3000/api/meta-api/oauth/callback`
+   - Salvar alterações.
+4. (Opcional) **Facebook Login → Configurações** → “Login com o JavaScript SDK” / domains: mesmo host se a UI reclamar.
+5. Permissões (Development: roles do app; Live: App Review):
    - `business_management` (obrigatório para listar BMs)
    - `whatsapp_business_management`
    - `whatsapp_business_messaging`
    - `pages_show_list`, `ads_read`, `public_profile`, `email` (úteis / default)
-5. App em modo Development: só usuários com role no app conseguem autorizar.
+6. App em modo **Development**: só usuários com **role no app** (Admin/Developer/Tester) conseguem autorizar. Adicione seu Facebook em **Funções**.
+7. Aguarde 1–2 min após salvar e tente de novo o botão **Entrar com Facebook**.
+
+### Checklist rápido
+
+| Campo | Valor |
+|-------|--------|
+| App Domains | `cria-o-de-bm.vercel.app` |
+| Site URL | `https://cria-o-de-bm.vercel.app/` |
+| Valid OAuth Redirect URI | `https://cria-o-de-bm.vercel.app/api/meta-api/oauth/callback` |
+| App ID no painel Cria-BM | **igual** ao do developers.facebook.com |
 
 ## Env
 
