@@ -6,7 +6,7 @@ Permitir que um admin autentique com a conta Facebook dona da Business Manager e
 
 ## Fluxo
 
-1. Admin salva **App ID + App Secret** em Integração Meta (uma vez).
+1. Admin salva **App ID + App Secret** em Integração Meta (uma vez). **Access Token manual é opcional** — o OAuth grava o token depois.
 2. Clica **Entrar com Facebook e conectar BM** (opcional: escolhe Empresa para auto-import).
 3. `GET /api/meta-api/oauth/start` → redirect dialog Facebook.
 4. Facebook → `GET /api/meta-api/oauth/callback?code&state`.

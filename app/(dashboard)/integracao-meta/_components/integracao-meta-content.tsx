@@ -190,7 +190,15 @@ export function IntegracaoMetaContent() {
 
   const handleSave = async () => {
     if (!form.appId) { toast.error('App ID é obrigatório'); return; }
-    if (!form.accessToken && !config?.accessToken) { toast.error('Access Token é obrigatório para conexão real'); return; }
+    // Access Token opcional: pode vir depois via "Entrar com Facebook" (OAuth) ou System User manual
+    const hasToken =
+      Boolean(form.accessToken) ||
+      Boolean(config?.hasAccessToken) ||
+      Boolean(config?.accessToken);
+    if (!hasToken && !form.appSecret && !config?.hasAppSecret && !config?.appSecret) {
+      toast.error('Informe App Secret (para OAuth) ou Access Token (System User)');
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch('/api/meta-api/config', {
@@ -396,23 +404,25 @@ export function IntegracaoMetaContent() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>App Secret</Label>
+                <Label>App Secret {config?.hasAppSecret ? '(salvo)' : '— necessário p/ OAuth'}</Label>
                 <div className="relative">
-                  <Input type={showSecret ? 'text' : 'password'} value={form.appSecret} onChange={(e: any) => setForm(p => ({ ...p, appSecret: e?.target?.value ?? '' }))} placeholder={config?.appSecret ? `Manter atual (${config.appSecret})` : 'Opcional'} />
+                  <Input type={showSecret ? 'text' : 'password'} value={form.appSecret} onChange={(e: any) => setForm(p => ({ ...p, appSecret: e?.target?.value ?? '' }))} placeholder={config?.appSecret ? `Manter atual (${config.appSecret})` : 'Obrigatório para Facebook Login OAuth'} />
                   <Button variant="ghost" size="sm" className="absolute right-1 top-1 h-8 w-8 p-0" onClick={() => setShowSecret(!showSecret)}>
                     {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </Button>
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Access Token (System User Token) *</Label>
+                <Label>Access Token (System User) — opcional se usar Facebook Login</Label>
                 <div className="relative">
-                  <Input type={showToken ? 'text' : 'password'} value={form.accessToken} onChange={(e: any) => setForm(p => ({ ...p, accessToken: e?.target?.value ?? '' }))} placeholder={config?.accessToken ? `Manter atual (${config.accessToken})` : 'Token permanente do System User'} />
+                  <Input type={showToken ? 'text' : 'password'} value={form.accessToken} onChange={(e: any) => setForm(p => ({ ...p, accessToken: e?.target?.value ?? '' }))} placeholder={config?.accessToken ? `Manter atual (${config.accessToken})` : 'Deixe vazio e use Entrar com Facebook, ou cole System User'} />
                   <Button variant="ghost" size="sm" className="absolute right-1 top-1 h-8 w-8 p-0" onClick={() => setShowToken(!showToken)}>
                     {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">Use o token permanente do System User (não o token temporário de teste)</p>
+                <p className="text-xs text-muted-foreground">
+                  Preferência OAuth: salve só App ID + Secret e clique em Entrar com Facebook. System User Token (não expira) continua válido se colar aqui.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label>Webhook Verify Token</Label>
@@ -426,7 +436,7 @@ export function IntegracaoMetaContent() {
                 <Button onClick={handleSave} disabled={saving}>
                   {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4 mr-2" /> Salvar Configuração</>}
                 </Button>
-                <Button variant="outline" onClick={handleTestConnection} disabled={testing || (!form.accessToken && !config?.accessToken)}>
+                <Button variant="outline" onClick={handleTestConnection} disabled={testing || (!form.accessToken && !config?.hasAccessToken && !config?.accessToken)}>
                   {testing ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Testando...</> : <><Unplug className="w-4 h-4 mr-2" /> Testar Conexão</>}
                 </Button>
               </div>
