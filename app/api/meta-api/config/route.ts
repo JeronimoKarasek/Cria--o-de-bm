@@ -22,6 +22,8 @@ export async function GET() {
       // Mask sensitive data
       appSecret: config.appSecret ? '***' + config.appSecret.slice(-4) : null,
       accessToken: config.accessToken ? '***' + config.accessToken.slice(-8) : null,
+      hasAppSecret: Boolean(config.appSecret || process.env.META_APP_SECRET),
+      hasAccessToken: Boolean(config.accessToken || process.env.META_SYSTEM_USER_TOKEN),
       createdAt: config.createdAt?.toISOString?.() ?? '',
       updatedAt: config.updatedAt?.toISOString?.() ?? '',
     });
@@ -44,17 +46,18 @@ export async function POST(request: Request) {
 
     if (!appId) return NextResponse.json({ error: 'App ID é obrigatório' }, { status: 400 });
 
-    // Deactivate existing
+    // Preserve secrets when the client omits them (masked UI re-save)
+    const prev = await prisma.metaApiConfig.findFirst({ where: { ativo: true } });
     await prisma.metaApiConfig.updateMany({ where: { ativo: true }, data: { ativo: false } });
 
     const config = await prisma.metaApiConfig.create({
       data: {
         appId,
-        appSecret: appSecret ?? null,
-        accessToken: accessToken ?? null,
-        webhookToken: webhookToken ?? null,
-        graphApiVersion: graphApiVersion ?? 'v21.0',
-        descricao: descricao ?? null,
+        appSecret: appSecret || prev?.appSecret || process.env.META_APP_SECRET || null,
+        accessToken: accessToken || prev?.accessToken || null,
+        webhookToken: webhookToken ?? prev?.webhookToken ?? null,
+        graphApiVersion: graphApiVersion ?? prev?.graphApiVersion ?? 'v21.0',
+        descricao: descricao ?? prev?.descricao ?? null,
         ativo: true,
       },
     });

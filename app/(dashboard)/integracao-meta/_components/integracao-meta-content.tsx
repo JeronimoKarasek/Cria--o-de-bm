@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   Settings, Key, Globe, Save, CheckCircle2, AlertTriangle,
   RefreshCw, Zap, Shield, Phone, FileText, BarChart3,
   ExternalLink, Copy, Eye, EyeOff, BookOpen, Webhook,
-  Download, Loader2, XCircle, Server, Clock, Unplug,
+  Download, Loader2, XCircle, Server, Clock, Unplug, Facebook,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -83,6 +84,8 @@ const metodoColor: Record<string, string> = {
 export function IntegracaoMetaContent() {
   const { data: session } = useSession() || {};
   const isAdmin = (session?.user as any)?.role === 'ADMIN';
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   const [config, setConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -96,6 +99,7 @@ export function IntegracaoMetaContent() {
   const [activeTab, setActiveTab] = useState<'config' | 'guia'>('config');
   const [empresas, setEmpresas] = useState<any[]>([]);
   const [selectedEmpresaId, setSelectedEmpresaId] = useState('');
+  const [oauthConnecting, setOauthConnecting] = useState(false);
 
   const [form, setForm] = useState({
     appId: '', appSecret: '', accessToken: '', webhookToken: '',
@@ -127,6 +131,62 @@ export function IntegracaoMetaContent() {
   }, [isAdmin]);
 
   useEffect(() => { fetchConfig(); }, [fetchConfig]);
+
+  // Feedback do callback OAuth (?oauth=ok|error|denied)
+  useEffect(() => {
+    const oauth = searchParams?.get('oauth');
+    if (!oauth) return;
+    const msg = searchParams?.get('msg') || '';
+    const bms = searchParams?.get('bms');
+    const imported = searchParams?.get('imported');
+    const nums = searchParams?.get('nums');
+    if (oauth === 'ok') {
+      const parts = [
+        'Facebook conectado.',
+        bms != null ? `${bms} BM(s) acessível(is).` : '',
+        imported != null ? `Importadas ${imported} conta(s)` : '',
+        nums != null ? `/ ${nums} número(s).` : '',
+        msg,
+      ].filter(Boolean);
+      toast.success(parts.join(' '));
+      fetchConfig();
+      handleTestConnectionQuiet();
+    } else if (oauth === 'denied') {
+      toast.error(msg || 'Login Facebook cancelado');
+    } else {
+      toast.error(msg || 'Falha no OAuth Facebook');
+    }
+    router.replace('/integracao-meta');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const handleTestConnectionQuiet = async () => {
+    try {
+      const res = await fetch('/api/meta-api/test-connection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      setTestResult(data);
+    } catch { /* ignore */ }
+  };
+
+  const handleConnectFacebook = () => {
+    if (!form.appId && !config?.appId) {
+      toast.error('Salve o App ID (e App Secret) antes de conectar com Facebook');
+      return;
+    }
+    if (!form.appSecret && !config?.hasAppSecret && !config?.appSecret) {
+      toast.error('App Secret é obrigatório para OAuth. Cole e salve antes de conectar.');
+      return;
+    }
+    setOauthConnecting(true);
+    const q = new URLSearchParams();
+    q.set('returnTo', '/integracao-meta');
+    if (selectedEmpresaId) q.set('empresaId', selectedEmpresaId);
+    window.location.href = `/api/meta-api/oauth/start?${q.toString()}`;
+  };
 
   const handleSave = async () => {
     if (!form.appId) { toast.error('App ID é obrigatório'); return; }
@@ -231,6 +291,83 @@ export function IntegracaoMetaContent() {
 
       {activeTab === 'config' && isAdmin && (
         <div className="space-y-6">
+          {/* Facebook Login OAuth */}
+          <Card className="border-blue-300 bg-gradient-to-br from-blue-50/80 to-white">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Facebook className="w-5 h-5 text-blue-600" /> Conectar BM com Facebook Login
+              </CardTitle>
+              <CardDescription>
+                Fluxo oficial OAuth: você entra com a conta Facebook dona da BM, autoriza o app e
+                o sistema grava um token long-lived (~60 dias) + lista/importa Business Managers.
+                Não precisa colar System User Token manualmente.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-3 bg-white rounded-lg border text-xs text-muted-foreground space-y-1">
+                <p className="font-medium text-foreground text-sm">Pré-requisitos no Meta for Developers</p>
+                <ol className="list-decimal ml-4 space-y-0.5">
+                  <li>App tipo Business com produto <strong>Facebook Login</strong> (ou Login for Business).</li>
+                  <li>
+                    Valid OAuth Redirect URI:{' '}
+                    <code className="bg-muted px-1 rounded">
+                      https://cria-o-de-bm.vercel.app/api/meta-api/oauth/callback
+                    </code>
+                  </li>
+                  <li>
+                    Permissões (App Review se app Live):{' '}
+                    <code className="bg-muted px-1 rounded">business_management</code>,{' '}
+                    <code className="bg-muted px-1 rounded">whatsapp_business_management</code>,{' '}
+                    <code className="bg-muted px-1 rounded">whatsapp_business_messaging</code>
+                  </li>
+                  <li>Salve <strong>App ID + App Secret</strong> abaixo (uma vez).</li>
+                </ol>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Empresa para auto-import (opcional)</Label>
+                <select
+                  value={selectedEmpresaId}
+                  onChange={(e: any) => setSelectedEmpresaId(e?.target?.value ?? '')}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">Só conectar token — importar depois</option>
+                  {empresas.map((emp: any) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.nomeFantasia} ({emp.cnpj})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Se escolher empresa, ao voltar do Facebook as BMs acessíveis já entram em Contas Meta.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={handleConnectFacebook}
+                  disabled={oauthConnecting || (!form.appId && !config?.appId)}
+                  className="bg-[#1877F2] hover:bg-[#166FE5] text-white"
+                >
+                  {oauthConnecting ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Redirecionando...</>
+                  ) : (
+                    <><Facebook className="w-4 h-4 mr-2" /> Entrar com Facebook e conectar BM</>
+                  )}
+                </Button>
+                <Button variant="outline" asChild>
+                  <a
+                    href="https://developers.facebook.com/apps/"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" /> Meta for Developers
+                  </a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Config Card */}
           <Card>
             <CardHeader>

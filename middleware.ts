@@ -15,6 +15,8 @@ export default withAuth(
           pathname?.startsWith('/api/auth') ||
           pathname?.startsWith('/api/signup') ||
           pathname?.startsWith('/api/meta-webhook') ||
+          // callback OAuth precisa entrar mesmo se cookie atrasar; valida session no handler
+          pathname?.startsWith('/api/meta-api/oauth/callback') ||
           pathname?.startsWith('/s/') ||
           pathname === '/'
         ) {
@@ -28,6 +30,6 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.svg|og-image.png|api/auth|api/signup|api/meta-webhook|s/).*)',
+    '/((?!_next/static|_next/image|favicon.svg|og-image.png|api/auth|api/signup|api/meta-webhook|api/meta-api/oauth/callback|s/).*)',
   ],
 };
